@@ -7,7 +7,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.holocrew.ui.available.AvailableScreen
 import com.example.holocrew.ui.home.HomeScreen
 import com.example.holocrew.ui.map.MapScreen
-import com.example.holocrew.ui.news.NewsScreen
 import com.example.holocrew.ui.profile.ProfileScreen
 import com.example.holocrew.ui.upcoming.UpcomingScreen
 
@@ -17,22 +16,22 @@ fun AppNavigation() {
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route  // ⭐ Home como inicio
+        startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
-            HomeScreen(navController)  // ⭐ HomeScreen (antes NewsScreen)
+            HomeScreen(navController)  // ✅ HomeScreen SÍ necesita navController
         }
         composable(Screen.Available.route) {
-            AvailableScreen()
+            AvailableScreen(navController)  // ❌ SIN navController (si no lo acepta)
         }
         composable(Screen.Upcoming.route) {
-            UpcomingScreen(navController)  // ⭐ Nueva pantalla Próximos
+            UpcomingScreen(navController)  // ✅ UpcomingScreen SÍ necesita navController
         }
         composable(Screen.Map.route) {
-            MapScreen()
+            MapScreen()  // ❌ SIN navController (si no lo acepta)
         }
         composable(Screen.Profile.route) {
-            ProfileScreen()
+            ProfileScreen()  // ❌ SIN navController (si no lo acepta)
         }
     }
 }

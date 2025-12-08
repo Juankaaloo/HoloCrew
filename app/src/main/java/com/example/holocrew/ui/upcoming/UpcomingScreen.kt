@@ -1,6 +1,8 @@
+// ui/upcoming/UpcomingScreen.kt
 package com.example.holocrew.ui.upcoming
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
@@ -27,8 +29,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -176,9 +180,9 @@ fun UpcomingProductCard(product: UpcomingProduct) {
                         .padding(8.dp)
                         .background(
                             when (product.status) {
-                                "Próximamente" -> Color(0xFFFF9800)  // Naranja
-                                "Reserva Abierta" -> Color(0xFF4CAF50) // Verde
-                                "Pre-orden" -> Color(0xFF2196F3)      // Azul
+                                "Próximamente" -> Color(0xFFFF9800)
+                                "Reserva Abierta" -> Color(0xFF4CAF50)
+                                "Pre-orden" -> Color(0xFF2196F3)
                                 else -> Color(0xFF607D8B)
                             },
                             RoundedCornerShape(6.dp)
@@ -227,8 +231,9 @@ fun UpcomingProductCard(product: UpcomingProduct) {
 
                 Column {
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        // ✅ CORRECCIÓN: Usamos DateRange en lugar de CalendarToday
                         Icon(
-                            imageVector = Icons.Default.CalendarToday,
+                            imageVector = Icons.Filled.DateRange,
                             contentDescription = "Fecha de lanzamiento",
                             tint = Color(0xFF666666),
                             modifier = Modifier.size(16.dp)
@@ -244,7 +249,8 @@ fun UpcomingProductCard(product: UpcomingProduct) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = "Notificarme",
@@ -258,7 +264,7 @@ fun UpcomingProductCard(product: UpcomingProduct) {
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                                 contentDescription = "Favorito",
                                 tint = if (isFavorite) Color.Red else Color(0xFF666666)
                             )

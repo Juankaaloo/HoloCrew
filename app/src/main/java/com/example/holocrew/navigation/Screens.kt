@@ -1,4 +1,3 @@
-// Screen.kt en: com.example.holocrew.navigation
 package com.example.holocrew.navigation
 
 sealed class Screen(val route: String) {
@@ -7,4 +6,7 @@ sealed class Screen(val route: String) {
     object Upcoming : Screen("upcoming")
     object Map : Screen("map")
     object Profile : Screen("profile")
+
+    // Si no usas News, elimínalo. Si lo usas, agrégalo a AppNavigation
+    // object News : Screen("news")
 }

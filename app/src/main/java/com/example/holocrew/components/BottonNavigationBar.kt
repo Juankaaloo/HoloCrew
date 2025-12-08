@@ -3,8 +3,8 @@ package com.example.holocrew.components
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -34,41 +35,53 @@ fun BottomNavigationBar(
         tonalElevation = 8.dp,
         modifier = modifier
     ) {
-        // Lista de ítems de navegación
-        val items = listOf(
-            Screen.News to Icons.Filled.Notifications,  // Noticias
-            Screen.Available to Icons.Filled.ShoppingCart,
-            Screen.Upcoming to Icons.Filled.DateRange,
-            Screen.Map to Icons.Filled.LocationOn,
-            Screen.Profile to Icons.Filled.Person
+        val navigationItems = listOf(
+            NavItem(
+                screen = Screen.Home,
+                icon = Icons.Filled.Home,
+                label = "Inicio"
+            ),
+            NavItem(
+                screen = Screen.Available,
+                icon = Icons.Filled.ShoppingCart,
+                label = "Disponibles"
+            ),
+            NavItem(
+                screen = Screen.Upcoming,
+                icon = Icons.Filled.DateRange,
+                label = "Próximos"
+            ),
+            NavItem(
+                screen = Screen.Map,
+                icon = Icons.Filled.LocationOn,
+                label = "Mapa"
+            ),
+            NavItem(
+                screen = Screen.Profile,
+                icon = Icons.Filled.Person,
+                label = "Perfil"
+            )
         )
 
-        items.forEach { (screen, icon) ->
+        navigationItems.forEach { item ->
             NavigationBarItem(
                 icon = {
                     Icon(
-                        imageVector = icon,
-                        contentDescription = screen.route,
+                        imageVector = item.icon,
+                        contentDescription = item.label,
                         modifier = Modifier.size(24.dp)
                     )
                 },
                 label = {
                     Text(
-                        text = when (screen) {
-                            Screen.News -> "Noticias"
-                            Screen.Available -> "Disponibles"
-                            Screen.Upcoming -> "Próximos"
-                            Screen.Map -> "Mapa"
-                            Screen.Profile -> "Perfil"
-                            else -> screen.route
-                        },
+                        text = item.label,
                         fontSize = 12.sp
                     )
                 },
-                selected = currentRoute == screen.route,
+                selected = currentRoute == item.screen.route,
                 onClick = {
-                    if (currentRoute != screen.route) {
-                        navController.navigate(screen.route) {
+                    if (currentRoute != item.screen.route) {
+                        navController.navigate(item.screen.route) {
                             launchSingleTop = true
                             restoreState = true
                         }
@@ -78,3 +91,10 @@ fun BottomNavigationBar(
         }
     }
 }
+
+// Clase auxiliar para los items de navegación
+data class NavItem(
+    val screen: Screen,
+    val icon: ImageVector,
+    val label: String
+)

@@ -1,40 +1,26 @@
+// ui/home/HomeScreen.kt
 package com.example.holocrew.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -46,60 +32,33 @@ import com.example.holocrew.R
 import com.example.holocrew.components.BottomNavigationBar
 import com.example.holocrew.components.CustomTopAppBar
 
-// Modelo de datos para Home
-data class HomeProduct(
-    val id: Int,
+// Modelo de datos para el contenido del carrusel/tarjeta principal
+data class HomeContent(
     val title: String,
     val subtitle: String,
-    val date: String,
     val imageRes: Int,
     val category: String,
-    val price: String? = null,
-    val isFavorite: Boolean = false
+    val details: String
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
-    // Datos para Home (Noticias como pantalla principal)
-    val homeProducts = remember {
+    // Datos de ejemplo para la pantalla de inicio
+    val mainItem = remember {
+        HomeContent(
+            title = "HoloCree Footwear",
+            subtitle = "Primicos",
+            imageRes = R.drawable.footwear,
+            category = "DROP",
+            details = "Un lanzamiento exclusivo con los Roneantes. Disponibilidad limitada. Entra para participar en el sorteo."
+        )
+    }
+
+    val secondaryItems = remember {
         listOf(
-            HomeProduct(
-                id = 1,
-                title = "HOLOCHEM Tops",
-                subtitle = "Nueva colección primavera/verano 2024",
-                date = "Hoy",
-                imageRes = R.drawable.tops,
-                category = "Nuevo",
-                price = "$89.99"
-            ),
-            HomeProduct(
-                id = 2,
-                title = "New Denims Collection",
-                subtitle = "Jeans premium edición limitada - Corte slim fit",
-                date = "Ayer",
-                imageRes = R.drawable.newdenims,
-                category = "Denim",
-                price = "$129.99"
-            ),
-            HomeProduct(
-                id = 3,
-                title = "Outerwears Premium",
-                subtitle = "Chaquetas y abrigos para invierno - Materiales premium",
-                date = "15 Dic",
-                imageRes = R.drawable.outerwear,
-                category = "Exterior",
-                price = "$199.99"
-            ),
-            HomeProduct(
-                id = 4,
-                title = "HOLOCHEM Agency",
-                subtitle = "Colección exclusiva para agencia - Edición limitada",
-                date = "10 Dic",
-                imageRes = R.drawable.tops,
-                category = "Exclusivo",
-                price = "$249.99"
-            )
+            mainItem.copy(title = "Retro Holo LongSleeve", subtitle = "Detalle 2", imageRes = R.drawable.retro_holo_fc_longsleeve),
+            mainItem.copy(title = "Champio Ring", subtitle = "Detalle 3", imageRes = R.drawable.championring_holo_black)
         )
     }
 
@@ -112,39 +71,42 @@ fun HomeScreen(navController: NavController) {
             )
         },
         bottomBar = {
+            // ✅ CORRECCIÓN: Solo pasa navController, NO currentRoute
             BottomNavigationBar(navController = navController)
         },
-        containerColor = Color(0xFFF5F5F5)
+        containerColor = Color.White
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
         ) {
+            // 1. Banner Principal
+            item {
+                HomeBanner(item = mainItem)
+            }
+
+            // 2. Título de la Sección
             item {
                 Column(
-                    modifier = Modifier.padding(vertical = 20.dp)
+                    modifier = Modifier.padding(16.dp, 24.dp, 16.dp, 8.dp)
                 ) {
                     Text(
-                        text = "HOLOCHEM HOME",
-                        fontSize = 28.sp,
+                        text = "ÚLTIMOS LANZAMIENTOS",
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
-                    )
-                    Text(
-                        text = "Moda urbana y streetwear premium",
-                        fontSize = 16.sp,
-                        color = Color(0xFF666666)
                     )
                 }
             }
 
-            items(homeProducts) { product ->
-                HomeProductCard(product = product)
-                Spacer(modifier = Modifier.height(12.dp))
+            // 3. Contenido Secundario
+            items(secondaryItems) { item ->
+                HomeContentCard(item = item)
+                Spacer(modifier = Modifier.height(16.dp))
             }
 
+            // Espacio final
             item {
                 Spacer(modifier = Modifier.height(80.dp))
             }
@@ -153,124 +115,80 @@ fun HomeScreen(navController: NavController) {
 }
 
 @Composable
-fun HomeProductCard(product: HomeProduct) {
-    var isFavorite by remember { mutableStateOf(product.isFavorite) }
+fun HomeBanner(item: HomeContent) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(550.dp)
+            .background(Color.Black)
+    ) {
+        Image(
+            painter = painterResource(id = item.imageRes),
+            contentDescription = item.title,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
 
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .background(Color.White)
+                .padding(16.dp)
+        ) {
+            Text(
+                text = item.details,
+                fontSize = 14.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = item.title,
+                fontSize = 24.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = item.subtitle,
+                fontSize = 24.sp,
+                color = Color.Black,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun HomeContentCard(item: HomeContent) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+            .height(280.dp)
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(modifier = Modifier.fillMaxSize()) {
-            Box(
+        Column(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = item.imageRes),
+                contentDescription = item.title,
                 modifier = Modifier
-                    .width(150.dp)
-                    .fillMaxSize()
-            ) {
-                Image(
-                    painter = painterResource(id = product.imageRes),
-                    contentDescription = product.title,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 16.dp,
-                                bottomStart = 16.dp
-                            )
-                        ),
-                    contentScale = ContentScale.Crop
+                    .fillMaxWidth()
+                    .height(200.dp),
+                contentScale = ContentScale.Crop
+            )
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = item.title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold
                 )
-
-                Box(
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .background(
-                            color = when (product.category) {
-                                "Nuevo" -> Color(0xFF4CAF50)
-                                "Denim" -> Color(0xFF2196F3)
-                                "Exterior" -> Color(0xFF9C27B0)
-                                "Exclusivo" -> Color(0xFFFF9800)
-                                else -> Color(0xFF607D8B)
-                            },
-                            shape = RoundedCornerShape(6.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = product.category.uppercase(),
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = product.title,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black,
-                        maxLines = 1
-                    )
-                    Text(
-                        text = product.subtitle,
-                        fontSize = 14.sp,
-                        color = Color(0xFF666666),
-                        modifier = Modifier.padding(top = 4.dp),
-                        maxLines = 2
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = product.price ?: "Consultar precio",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2196F3)
-                    )
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = "Fecha",
-                            tint = Color(0xFF666666),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = product.date,
-                            fontSize = 14.sp,
-                            color = Color(0xFF666666)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { isFavorite = !isFavorite },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Favorito",
-                            tint = if (isFavorite) Color.Red else Color(0xFF666666)
-                        )
-                    }
-                }
+                Text(
+                    text = item.subtitle,
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
             }
         }
     }
