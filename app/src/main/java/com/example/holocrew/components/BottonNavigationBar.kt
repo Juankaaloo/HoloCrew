@@ -27,14 +27,18 @@ fun BottomNavigationBar(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
+    // Obtenemos la entrada actual del backstack (pantalla actual)
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    // Extraemos la ruta actual para marcar el elemento seleccionado
     val currentRoute = currentBackStackEntry?.destination?.route
 
+    // Barra de navegación inferior de Material 3
     NavigationBar(
-        containerColor = Color.White,
-        tonalElevation = 8.dp,
+        containerColor = Color.White,   // Fondo blanco
+        tonalElevation = 8.dp,           // Sombra para dar elevación visual
         modifier = modifier
     ) {
+        // Lista de items que aparecerán en la barra inferior
         val navigationItems = listOf(
             NavItem(
                 screen = Screen.Home,
@@ -63,9 +67,11 @@ fun BottomNavigationBar(
             )
         )
 
+        // Dibujamos cada ítem de la barra inferior
         navigationItems.forEach { item ->
             NavigationBarItem(
                 icon = {
+                    // Icono visible del item
                     Icon(
                         imageVector = item.icon,
                         contentDescription = item.label,
@@ -73,17 +79,20 @@ fun BottomNavigationBar(
                     )
                 },
                 label = {
+                    // Texto descriptivo del item
                     Text(
                         text = item.label,
                         fontSize = 12.sp
                     )
                 },
+                // Marcamos el item como seleccionado según la ruta actual
                 selected = currentRoute == item.screen.route,
                 onClick = {
+                    // Navegamos solo si no estamos ya en la pantalla destino
                     if (currentRoute != item.screen.route) {
                         navController.navigate(item.screen.route) {
-                            launchSingleTop = true
-                            restoreState = true
+                            launchSingleTop = true      // Evita duplicar pantallas en el stack
+                            restoreState = true         // Restaura estado previo si existía
                         }
                     }
                 }
@@ -92,9 +101,9 @@ fun BottomNavigationBar(
     }
 }
 
-// Clase auxiliar para los items de navegación
+// Clase para representar cada item del menú inferior
 data class NavItem(
-    val screen: Screen,
-    val icon: ImageVector,
-    val label: String
+    val screen: Screen,          // Pantalla destino
+    val icon: ImageVector,       // Icono que se mostrará
+    val label: String            // Texto visible bajo el icono
 )

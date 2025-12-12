@@ -46,6 +46,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.activity:activity-compose:1.8.2")
     implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 
     // Compose BOM
     implementation(platform("androidx.compose:compose-bom:2023.08.00"))
@@ -54,9 +55,16 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
+    // GSON para JSON
+    implementation("com.google.code.gson:gson:2.10.1")
+
     // ⭐⭐ NAVIGATION COMPOSE (IMPORTANTE) ⭐⭐
     implementation("androidx.navigation:navigation-compose:2.7.6")
     implementation(libs.navigation.compose)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

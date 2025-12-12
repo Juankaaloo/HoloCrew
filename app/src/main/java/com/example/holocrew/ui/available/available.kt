@@ -70,7 +70,7 @@ fun AvailableScreen(
         },
         bottomBar = {
             if (navController != null) {
-                BottomNavigationBar(navController = navController) // ✅ Sin currentRoute
+                BottomNavigationBar(navController = navController)
             }
         },
         containerColor = Color(0xFFF5F5F5)
@@ -165,7 +165,19 @@ fun AvailableScreen(
 
             // Lista de productos filtrados
             items(filteredProducts) { product ->
-                AvailableProductCard(product = product)
+                AvailableProductCard(
+                    product = product,
+                    onProductClick = { clickedProduct ->
+                        // Navegar a la pantalla de detalle del producto
+                        navController?.navigate("product_detail/${clickedProduct.id}")
+                    },
+                    onFavoriteClick = {
+                        println("⭐ Favorito: ${product.title}")
+                    },
+                    onCartClick = {
+                        println("🛒 Carrito: ${product.title}")
+                    }
+                )
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
@@ -201,7 +213,12 @@ fun CategoryFilterChip(
 }
 
 @Composable
-fun AvailableProductCard(product: AvailableProduct) {
+fun AvailableProductCard(
+    product: AvailableProduct,
+    onProductClick: (AvailableProduct) -> Unit = {},
+    onFavoriteClick: () -> Unit = {},
+    onCartClick: () -> Unit = {}
+) {
     val isFavorite = remember { product.isFavorite }
     val inCart = remember { product.inCart }
 
@@ -209,7 +226,8 @@ fun AvailableProductCard(product: AvailableProduct) {
         modifier = Modifier
             .fillMaxWidth()
             .height(140.dp)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .clickable { onProductClick(product) },
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -343,7 +361,7 @@ fun AvailableProductCard(product: AvailableProduct) {
 
                     Row {
                         IconButton(
-                            onClick = { /* TODO */ },
+                            onClick = onFavoriteClick,
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
@@ -355,7 +373,7 @@ fun AvailableProductCard(product: AvailableProduct) {
                         }
 
                         IconButton(
-                            onClick = { /* TODO */ },
+                            onClick = onCartClick,
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(

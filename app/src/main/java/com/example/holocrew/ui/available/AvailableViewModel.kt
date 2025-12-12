@@ -68,5 +68,7 @@ class AvailableViewModel(application: Application) : AndroidViewModel(applicatio
         _filteredProducts.value = newFilteredList
     }
 
+
+
     // Nota: Aquí irían funciones para togglear favorito/carrito, actualizar la lista, etc.
 }
