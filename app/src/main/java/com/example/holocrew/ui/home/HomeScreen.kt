@@ -3,24 +3,16 @@ package com.example.holocrew.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -32,7 +24,6 @@ import com.example.holocrew.R
 import com.example.holocrew.components.BottomNavigationBar
 import com.example.holocrew.components.CustomTopAppBar
 
-// Modelo de datos para el contenido del carrusel/tarjeta principal
 data class HomeContent(
     val title: String,
     val subtitle: String,
@@ -44,34 +35,48 @@ data class HomeContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
-    // Datos de ejemplo para la pantalla de inicio
+
     val mainItem = remember {
         HomeContent(
-            title = "HoloCree Footwear",
+            title = "HoloCrew Footwear",
             subtitle = "Primicos",
             imageRes = R.drawable.footwear,
             category = "DROP",
-            details = "Un lanzamiento exclusivo con los Roneantes. Disponibilidad limitada. Entra para participar en el sorteo."
+            details = "Un lanzamiento exclusivo con los Roneantes. Disponibilidad limitada."
         )
     }
 
-    val secondaryItems = remember {
+    val carouselItems = remember {
         listOf(
-            mainItem.copy(title = "Retro Holo LongSleeve", subtitle = "Detalle 2", imageRes = R.drawable.retro_holo_fc_longsleeve),
-            mainItem.copy(title = "Champio Ring", subtitle = "Detalle 3", imageRes = R.drawable.championring_holo_black)
+            HomeContent(
+                title = "HoloCrew Footwear",
+                subtitle = "DROP Exclusivo",
+                imageRes = R.drawable.footwear,
+                category = "DROP",
+                details = "Disponibilidad limitada."
+            ),
+            HomeContent(
+                title = "Retro Holo LongSleeve",
+                subtitle = "Nueva Colección",
+                imageRes = R.drawable.retro_holo_fc_longsleeve,
+                category = "ROPA",
+                details = "Edición retro limitada."
+            ),
+            HomeContent(
+                title = "Champion Ring",
+                subtitle = "Accesorios",
+                imageRes = R.drawable.championring_holo_black,
+                category = "ACCESORIO",
+                details = "Pieza única de la colección."
+            )
         )
     }
 
     Scaffold(
         topBar = {
-            CustomTopAppBar(
-                onSearchClick = {
-                    println("🔍 Búsqueda desde Home")
-                }
-            )
+            CustomTopAppBar(onSearchClick = { })
         },
         bottomBar = {
-            // ✅ CORRECCIÓN: Solo pasa navController, NO currentRoute
             BottomNavigationBar(navController = navController)
         },
         containerColor = Color.White
@@ -81,34 +86,37 @@ fun HomeScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 1. Banner Principal
+            // Banner principal grande
             item {
                 HomeBanner(item = mainItem)
             }
 
-            // 2. Título de la Sección
+            // Título sección carrusel
             item {
-                Column(
-                    modifier = Modifier.padding(16.dp, 24.dp, 16.dp, 8.dp)
+                Text(
+                    text = "ÚLTIMOS LANZAMIENTOS",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 12.dp)
+                )
+            }
+
+            // Carrusel horizontal
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "ÚLTIMOS LANZAMIENTOS",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
+                    items(carouselItems) { item ->
+                        CarouselCard(item = item)
+                    }
                 }
             }
 
-            // 3. Contenido Secundario
-            items(secondaryItems) { item ->
-                HomeContentCard(item = item)
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // Espacio final
             item {
-                Spacer(modifier = Modifier.height(80.dp))
+                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }
@@ -128,7 +136,6 @@ fun HomeBanner(item: HomeContent) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -160,34 +167,66 @@ fun HomeBanner(item: HomeContent) {
 }
 
 @Composable
-fun HomeContentCard(item: HomeContent) {
+fun CarouselCard(item: HomeContent) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .height(280.dp)
-            .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .width(200.dp)
+            .height(260.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = item.imageRes),
-                contentDescription = item.title,
+            // Imagen
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp),
-                contentScale = ContentScale.Crop
-            )
-            Column(modifier = Modifier.padding(12.dp)) {
+                    .height(190.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = item.imageRes),
+                    contentDescription = item.title,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
+                    contentScale = ContentScale.Crop
+                )
+                // Badge de categoría
+                Box(
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .align(Alignment.TopStart)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(Color.Black)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = item.category,
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            // Info
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
+            ) {
                 Text(
                     text = item.title,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    maxLines = 1
                 )
                 Text(
                     text = item.subtitle,
-                    fontSize = 14.sp,
-                    color = Color.Gray
+                    fontSize = 11.sp,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 2.dp),
+                    maxLines = 1
                 )
             }
         }
