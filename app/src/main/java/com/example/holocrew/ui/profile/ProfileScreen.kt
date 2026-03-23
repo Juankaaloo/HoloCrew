@@ -1,3 +1,18 @@
+/**
+ * ProfileScreen.kt
+ *
+ * Pantalla de perfil del usuario en HoloCrew.
+ * Diseño premium con:
+ *  - Header negro con avatar, nombre y email
+ *  - Estadísticas dinámicas (favoritos y carrito reales)
+ *  - Accesos rápidos (Pedidos, Favoritos, Carrito)
+ *  - Banner de miembro HoloCrew
+ *  - Secciones de menú limpias y organizadas
+ *  - Botón de cerrar sesión
+ *
+ * Las estadísticas de favoritos y carrito se leen en tiempo real
+ * desde FavoritesManager y CartManager.
+ */
 package com.example.holocrew.ui.profile
 
 import androidx.compose.foundation.background
@@ -9,353 +24,334 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.holocrew.components.BottomNavigationBar
+import com.example.holocrew.data.CartManager
+import com.example.holocrew.data.FavoritesManager
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(navController: NavController? = null) {
+
+    // Estadísticas dinámicas reales
+    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
+    val cartItems by CartManager.items.collectAsState()
+    val favCount = favoriteIds.size
+    val cartCount = cartItems.sumOf { it.quantity }
+
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Mi Perfil",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color.Black
-                )
-            )
+        bottomBar = {
+            if (navController != null) BottomNavigationBar(navController = navController)
         },
-        containerColor = Color(0xFFF5F5F5)
+        containerColor = Color.White
     ) { paddingValues ->
+
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+            contentPadding = PaddingValues(bottom = 80.dp)
         ) {
-            // Avatar y datos del usuario
+
+            // ════════════════════════════════════════════════════════════
+            // HEADER NEGRO con avatar, nombre y email
+            // ════════════════════════════════════════════════════════════
             item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.White)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(Color.Black)
+                        .padding(horizontal = 20.dp, vertical = 28.dp)
                 ) {
-                    // Avatar placeholder
-                    Box(
-                        modifier = Modifier
-                            .size(90.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFEEEEEE))
-                            .border(2.dp, Color.Black, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Person,
-                            contentDescription = "Avatar",
-                            tint = Color(0xFF9E9E9E),
-                            modifier = Modifier.size(50.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "Holo User",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                    Text(
-                        text = "holocrew@example.com",
-                        fontSize = 14.sp,
-                        color = Color(0xFF9E9E9E),
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Estadísticas
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        StatItem(value = "12", label = "Pedidos")
-                        Divider(
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Avatar
+                        Box(
                             modifier = Modifier
-                                .height(40.dp)
-                                .width(1.dp),
-                            color = Color(0xFFEEEEEE)
-                        )
-                        StatItem(value = "5", label = "Favoritos")
-                        Divider(
-                            modifier = Modifier
-                                .height(40.dp)
-                                .width(1.dp),
-                            color = Color(0xFFEEEEEE)
-                        )
-                        StatItem(value = "2", label = "Pendientes")
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF2D2D2D))
+                                .border(2.dp, Color(0xFFD4AF37), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "HC",
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFD4AF37)
+                            )
+                        }
+
+                        Spacer(Modifier.width(16.dp))
+
+                        // Nombre y email
+                        Column {
+                            Text("Holo User", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text("holocrew@example.com", fontSize = 13.sp, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.padding(top = 2.dp))
+                            // Badge miembro
+                            Box(
+                                modifier = Modifier.padding(top = 6.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0xFFD4AF37).copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 3.dp)
+                            ) {
+                                Text("MIEMBRO GOLD", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), letterSpacing = 1.sp)
+                            }
+                        }
+
+                        Spacer(Modifier.weight(1f))
+
+                        // Icono editar
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Outlined.Edit, "Editar perfil", tint = Color.White.copy(alpha = 0.6f))
+                        }
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(12.dp)) }
-
-            // Sección Pedidos recientes
+            // ════════════════════════════════════════════════════════════
+            // ESTADÍSTICAS DINÁMICAS
+            // ════════════════════════════════════════════════════════════
             item {
-                ProfileSectionTitle("PEDIDOS RECIENTES")
-                ProfileMenuItem(
-                    icon = Icons.Filled.ShoppingBag,
-                    title = "Holo Pannel Hoodie",
-                    subtitle = "Entregado · 15 Nov 2024",
-                    showChevron = true
-                )
-                ProfileMenuItem(
-                    icon = Icons.Filled.ShoppingBag,
-                    title = "Denim Bison Holo",
-                    subtitle = "En camino · 20 Nov 2024",
-                    showChevron = true,
-                    badgeText = "En camino",
-                    badgeColor = Color(0xFF2196F3)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(Color.Black).padding(horizontal = 20.dp).padding(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    StatCard(value = "12", label = "Pedidos", icon = Icons.Outlined.ShoppingBag)
+                    StatCard(value = "$favCount", label = "Favoritos", icon = Icons.Outlined.FavoriteBorder)
+                    StatCard(value = "$cartCount", label = "En carrito", icon = Icons.Outlined.ShoppingCart)
+                }
             }
 
-            item { Spacer(modifier = Modifier.height(12.dp)) }
-
-            // Sección Métodos de pago
+            // ════════════════════════════════════════════════════════════
+            // ACCESOS RÁPIDOS
+            // ════════════════════════════════════════════════════════════
             item {
-                ProfileSectionTitle("MÉTODOS DE PAGO")
-                ProfileMenuItem(
-                    icon = Icons.Filled.CreditCard,
-                    title = "Tarjeta terminada en 4242",
-                    subtitle = "Visa · Expira 12/26",
-                    showChevron = true
-                )
-                ProfileMenuItem(
-                    icon = Icons.Filled.Add,
-                    title = "Añadir método de pago",
-                    subtitle = "",
-                    showChevron = false,
-                    titleColor = Color(0xFF2196F3)
-                )
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    QuickAction(
+                        icon = Icons.Outlined.ShoppingBag,
+                        label = "Mis Pedidos",
+                        modifier = Modifier.weight(1f),
+                        onClick = {}
+                    )
+                    QuickAction(
+                        icon = Icons.Outlined.FavoriteBorder,
+                        label = "Favoritos",
+                        modifier = Modifier.weight(1f),
+                        onClick = { navController?.navigate("favorites") { launchSingleTop = true } }
+                    )
+                    QuickAction(
+                        icon = Icons.Outlined.ShoppingCart,
+                        label = "Carrito",
+                        modifier = Modifier.weight(1f),
+                        onClick = { navController?.navigate("cart") { launchSingleTop = true } }
+                    )
+                }
             }
 
-            item { Spacer(modifier = Modifier.height(12.dp)) }
-
-            // Sección Dirección de envío
+            // ════════════════════════════════════════════════════════════
+            // BANNER MIEMBRO
+            // ════════════════════════════════════════════════════════════
             item {
-                ProfileSectionTitle("DIRECCIÓN DE ENVÍO")
-                ProfileMenuItem(
-                    icon = Icons.Filled.LocationOn,
-                    title = "Casa",
-                    subtitle = "Calle Ejemplo 123, Madrid, 28001",
-                    showChevron = true
-                )
-                ProfileMenuItem(
-                    icon = Icons.Filled.Add,
-                    title = "Añadir dirección",
-                    subtitle = "",
-                    showChevron = false,
-                    titleColor = Color(0xFF2196F3)
-                )
-            }
-
-            item { Spacer(modifier = Modifier.height(12.dp)) }
-
-            // Sección Ajustes
-            item {
-                ProfileSectionTitle("AJUSTES")
-                ProfileMenuItem(
-                    icon = Icons.Filled.Notifications,
-                    title = "Notificaciones",
-                    subtitle = "Activadas",
-                    showChevron = true
-                )
-                ProfileMenuItem(
-                    icon = Icons.Filled.Lock,
-                    title = "Privacidad y seguridad",
-                    subtitle = "",
-                    showChevron = true
-                )
-                ProfileMenuItem(
-                    icon = Icons.Filled.Info,
-                    title = "Sobre HoloCrew",
-                    subtitle = "Versión 1.0.0",
-                    showChevron = true
-                )
-            }
-
-            item { Spacer(modifier = Modifier.height(12.dp)) }
-
-            // Cerrar sesión
-            item {
-                Card(
+                Spacer(Modifier.height(20.dp))
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .clickable { /* placeholder */ },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color(0xFF1A1A1A), Color(0xFF2D2D2D))
+                            )
+                        )
+                        .padding(20.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.ExitToApp,
-                            contentDescription = "Cerrar sesión",
-                            tint = Color(0xFFE53935),
-                            modifier = Modifier.size(22.dp)
-                        )
-                        Text(
-                            text = "Cerrar sesión",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFFE53935),
-                            modifier = Modifier.padding(start = 14.dp)
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("HoloCrew Member", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), letterSpacing = 1.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text("Envío gratis en todos\ntus pedidos", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White, lineHeight = 20.sp)
+                            Spacer(Modifier.height(4.dp))
+                            Text("Acceso anticipado a nuevos drops", fontSize = 12.sp, color = Color.White.copy(alpha = 0.6f))
+                        }
+                        Icon(Icons.Filled.Star, null, tint = Color(0xFFD4AF37), modifier = Modifier.size(40.dp))
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(100.dp)) }
+            // ════════════════════════════════════════════════════════════
+            // PEDIDOS RECIENTES
+            // ════════════════════════════════════════════════════════════
+            item {
+                Spacer(Modifier.height(24.dp))
+                SectionTitle("PEDIDOS RECIENTES")
+                Spacer(Modifier.height(8.dp))
+
+                MenuItem(icon = Icons.Outlined.ShoppingBag, title = "Holo Pannel Hoodie", subtitle = "Entregado · 15 Nov 2024", badgeText = "Entregado", badgeColor = Color(0xFF4CAF50))
+                MenuItem(icon = Icons.Outlined.ShoppingBag, title = "Denim Bison Holo", subtitle = "En camino · 20 Nov 2024", badgeText = "En camino", badgeColor = Color(0xFF2196F3))
+                MenuItem(icon = Icons.Outlined.ShoppingBag, title = "Glory Holo Polo", subtitle = "Procesando · 25 Nov 2024", badgeText = "Procesando", badgeColor = Color(0xFFFF9800))
+            }
+
+            // ════════════════════════════════════════════════════════════
+            // CUENTA
+            // ════════════════════════════════════════════════════════════
+            item {
+                Spacer(Modifier.height(20.dp))
+                SectionTitle("MI CUENTA")
+                Spacer(Modifier.height(8.dp))
+
+                MenuItem(icon = Icons.Outlined.CreditCard, title = "Métodos de pago", subtitle = "Visa terminada en 4242")
+                MenuItem(icon = Icons.Outlined.LocationOn, title = "Direcciones de envío", subtitle = "Casa · Calle Ejemplo 123, Madrid")
+                MenuItem(icon = Icons.Outlined.Person, title = "Datos personales", subtitle = "Nombre, email, teléfono")
+            }
+
+            // ════════════════════════════════════════════════════════════
+            // AJUSTES
+            // ════════════════════════════════════════════════════════════
+            item {
+                Spacer(Modifier.height(20.dp))
+                SectionTitle("AJUSTES")
+                Spacer(Modifier.height(8.dp))
+
+                MenuItem(icon = Icons.Outlined.Notifications, title = "Notificaciones", subtitle = "Drops, ofertas, pedidos")
+                MenuItem(icon = Icons.Outlined.Lock, title = "Privacidad y seguridad", subtitle = "Contraseña, sesiones activas")
+                MenuItem(icon = Icons.Outlined.Info, title = "Sobre HoloCrew", subtitle = "Versión 1.0.0")
+                MenuItem(icon = Icons.Outlined.Help, title = "Centro de ayuda", subtitle = "FAQ, contacto, soporte")
+            }
+
+            // ════════════════════════════════════════════════════════════
+            // CERRAR SESIÓN
+            // ════════════════════════════════════════════════════════════
+            item {
+                Spacer(Modifier.height(24.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp))
+                        .clickable {
+                            // Cerrar sesión: navegar al Login y limpiar el backstack
+                            navController?.navigate("login") {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Cerrar sesión", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color(0xFFE53935))
+                }
+                Spacer(Modifier.height(16.dp))
+            }
         }
     }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// COMPONENTES
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Card de estadística en el header */
 @Composable
-fun StatItem(value: String, label: String) {
+fun StatCard(value: String, label: String, icon: ImageVector) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = value,
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
-        Text(
-            text = label,
-            fontSize = 12.sp,
-            color = Color(0xFF9E9E9E)
-        )
+        Icon(icon, null, tint = Color.White.copy(alpha = 0.5f), modifier = Modifier.size(20.dp))
+        Spacer(Modifier.height(6.dp))
+        Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(label, fontSize = 11.sp, color = Color.White.copy(alpha = 0.5f))
     }
 }
 
+/** Botón de acceso rápido */
 @Composable
-fun ProfileSectionTitle(title: String) {
+fun QuickAction(icon: ImageVector, label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(
+        modifier = modifier.height(80.dp).clickable { onClick() },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(12.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(icon, label, tint = Color.Black, modifier = Modifier.size(24.dp))
+            Spacer(Modifier.height(6.dp))
+            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.Black)
+        }
+    }
+}
+
+/** Título de sección */
+@Composable
+fun SectionTitle(title: String) {
     Text(
-        text = title,
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Bold,
-        color = Color(0xFF9E9E9E),
-        modifier = Modifier.padding(start = 16.dp, bottom = 6.dp)
+        title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF9E9E9E),
+        letterSpacing = 1.sp, modifier = Modifier.padding(horizontal = 16.dp)
     )
 }
 
+/** Item de menú con icono, título, subtítulo, badge opcional y flecha */
 @Composable
-fun ProfileMenuItem(
+fun MenuItem(
     icon: ImageVector,
     title: String,
-    subtitle: String,
-    showChevron: Boolean,
-    titleColor: Color = Color.Black,
+    subtitle: String = "",
     badgeText: String? = null,
-    badgeColor: Color = Color.Transparent
+    badgeColor: Color = Color.Transparent,
+    onClick: () -> Unit = {}
 ) {
-    Card(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 2.dp)
-            .clickable { /* placeholder */ },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // Icono con fondo
+        Box(
+            modifier = Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFFF5F5F5)),
+            contentAlignment = Alignment.Center
         ) {
-            // Icono con fondo
-            Box(
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFF0F0F0)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = title,
-                    tint = Color.Black,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            Icon(icon, title, tint = Color.Black, modifier = Modifier.size(20.dp))
+        }
 
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(start = 12.dp)
-            ) {
-                Text(
-                    text = title,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = titleColor
-                )
-                if (subtitle.isNotEmpty()) {
-                    Text(
-                        text = subtitle,
-                        fontSize = 12.sp,
-                        color = Color(0xFF9E9E9E),
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
-            }
+        Spacer(Modifier.width(14.dp))
 
-            // Badge opcional
-            if (badgeText != null) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(badgeColor.copy(alpha = 0.1f))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = badgeText,
-                        fontSize = 11.sp,
-                        color = badgeColor,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-
-            if (showChevron) {
-                Icon(
-                    imageVector = Icons.Filled.ChevronRight,
-                    contentDescription = null,
-                    tint = Color(0xFFCCCCCC),
-                    modifier = Modifier.size(20.dp)
-                )
+        // Textos
+        Column(Modifier.weight(1f)) {
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.Black)
+            if (subtitle.isNotEmpty()) {
+                Text(subtitle, fontSize = 12.sp, color = Color(0xFF9E9E9E), modifier = Modifier.padding(top = 2.dp))
             }
         }
+
+        // Badge opcional
+        if (badgeText != null) {
+            Box(
+                modifier = Modifier.clip(RoundedCornerShape(6.dp))
+                    .background(badgeColor.copy(alpha = 0.1f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+            ) {
+                Text(badgeText, fontSize = 11.sp, color = badgeColor, fontWeight = FontWeight.Bold)
+            }
+            Spacer(Modifier.width(8.dp))
+        }
+
+        // Flecha
+        Icon(Icons.Filled.ChevronRight, null, tint = Color(0xFFCCCCCC), modifier = Modifier.size(20.dp))
     }
 }

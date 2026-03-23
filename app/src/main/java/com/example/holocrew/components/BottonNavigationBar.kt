@@ -1,7 +1,28 @@
+/**
+ * BottomNavigationBar.kt
+ *
+ * Barra de navegación inferior personalizada de la aplicación HoloCrew.
+ * Diseño con forma de píldora flotante con un botón central del carrito
+ * elevado que muestra un badge con el número de items.
+ *
+ * Estructura:
+ *  - Píldora blanca con sombra que contiene los iconos de navegación
+ *  - Lado izquierdo: Home + Explore
+ *  - Centro: botón flotante del carrito (elevado sobre la píldora)
+ *  - Lado derecho: Drops + Profile
+ *
+ * El badge del carrito se actualiza en tiempo real gracias al CartManager.
+ * Los iconos cambian de color y peso según la pantalla activa.
+ */
 package com.example.holocrew.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,10 +34,13 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -25,16 +49,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.holocrew.data.CartManager
 import com.example.holocrew.navigation.Screen
 
+/**
+ * Barra de navegación inferior con diseño de píldora flotante.
+ *
+ * @param navController Controlador de navegación para cambiar entre pantallas
+ * @param modifier Modifier opcional para personalizar desde el padre
+ */
 @Composable
 fun BottomNavigationBar(
     navController: NavController,
     modifier: Modifier = Modifier
 ) {
+    // Observar la ruta actual para resaltar el icono activo
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
+    // Observar el número de items en el carrito para el badge
+    val cartItems by CartManager.items.collectAsState()
+    val cartItemCount = cartItems.sumOf { it.quantity }
+
+    // Definir los items de navegación (izquierda y derecha del carrito)
     val leftItems = listOf(
         NavItem(screen = Screen.Home, icon = Icons.Filled.Home, label = "Home"),
         NavItem(screen = Screen.Available, icon = Icons.Filled.Search, label = "Explore")
@@ -51,7 +88,7 @@ fun BottomNavigationBar(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
-        // Barra principal (píldora)
+        // ── Píldora principal (barra blanca con sombra) ──
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -74,6 +111,7 @@ fun BottomNavigationBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
+                // ── Items izquierdos (Home, Explore) ──
                 leftItems.forEach { item ->
                     NavBarItem(
                         item = item,
@@ -89,8 +127,10 @@ fun BottomNavigationBar(
                     )
                 }
 
+                // Espacio central para el botón flotante del carrito
                 Spacer(modifier = Modifier.width(72.dp))
 
+                // ── Items derechos (Drops, Profile) ──
                 rightItems.forEach { item ->
                     NavBarItem(
                         item = item,
@@ -108,7 +148,7 @@ fun BottomNavigationBar(
             }
         }
 
-        // Botón carrito flotante
+        // ── Botón flotante del carrito (centrado, elevado) ──
         Box(
             modifier = Modifier
                 .size(58.dp)
@@ -121,47 +161,106 @@ fun BottomNavigationBar(
                 )
                 .clip(RoundedCornerShape(18.dp))
                 .background(Color.White)
-                .clickable { navController.navigate(Screen.Cart.route) { launchSingleTop = true } },
+                .clickable {
+                    navController.navigate(Screen.Cart.route) { launchSingleTop = true }
+                },
             contentAlignment = Alignment.Center
         ) {
+            // Icono del carrito
             Icon(
                 imageVector = Icons.Filled.ShoppingCart,
                 contentDescription = "Carrito",
                 tint = Color.Black,
                 modifier = Modifier.size(24.dp)
             )
+
+            // ── Badge con número de items (solo visible si hay items) ──
+            if (cartItemCount > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 4.dp, y = (-2).dp)
+                        .size(20.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE53935)),  // Rojo para el badge
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        // Si hay más de 9 items, mostrar "9+"
+                        text = if (cartItemCount > 9) "9+" else "$cartItemCount",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
 
+/**
+ * Item individual de la barra de navegación.
+ * Muestra un icono y un label debajo. Cambia de estilo cuando está seleccionado:
+ *  - Seleccionado: icono negro, texto negro en negrita, ligeramente escalado
+ *  - No seleccionado: icono gris, texto gris normal
+ *
+ * @param item Datos del item (pantalla, icono, label)
+ * @param isSelected Si este item corresponde a la pantalla actual
+ * @param onClick Callback al pulsar el item
+ */
 @Composable
 private fun NavBarItem(
     item: NavItem,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    // Animación de color para transición suave
+    val iconColor by animateColorAsState(
+        targetValue = if (isSelected) Color.Black else Color(0xFF9E9E9E),
+        label = "navIconColor"
+    )
+
+    // Animación de escala sutil al seleccionar
+    val scale by animateFloatAsState(
+        targetValue = if (isSelected) 1.1f else 1.0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "navScale"
+    )
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .clip(RoundedCornerShape(12.dp))
-            .clickable { onClick() }
+            .clickable(
+                // Quitar el ripple para un look más limpio
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onClick() }
             .padding(horizontal = 10.dp, vertical = 6.dp)
+            .scale(scale)
     ) {
         Icon(
             imageVector = item.icon,
             contentDescription = item.label,
-            tint = if (isSelected) Color.Black else Color(0xFF9E9E9E),
+            tint = iconColor,
             modifier = Modifier.size(22.dp)
         )
         Text(
             text = item.label,
             fontSize = 11.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) Color.Black else Color(0xFF9E9E9E)
+            color = iconColor
         )
     }
 }
 
+/**
+ * Modelo de datos para un item de la barra de navegación.
+ *
+ * @param screen Pantalla destino (de la sealed class Screen)
+ * @param icon Icono Material del item
+ * @param label Texto que se muestra debajo del icono
+ */
 data class NavItem(
     val screen: Screen,
     val icon: ImageVector,

@@ -55,9 +55,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
 
-    // GSON para JSON
-    implementation("com.google.code.gson:gson:2.10.1")
-
     // ⭐⭐ NAVIGATION COMPOSE (IMPORTANTE) ⭐⭐
     implementation("androidx.navigation:navigation-compose:2.7.6")
     implementation(libs.navigation.compose)
