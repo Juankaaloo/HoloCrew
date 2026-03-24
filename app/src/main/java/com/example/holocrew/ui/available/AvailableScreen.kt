@@ -124,7 +124,6 @@ fun AvailableScreen(navController: NavController? = null) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text("Disponibles", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                        Icon(Icons.Outlined.FilterList, "Filtros", tint = Color.Black, modifier = Modifier.size(24.dp))
                     }
                     Text(
                         "${filteredProducts.size} productos",
@@ -158,7 +157,7 @@ fun AvailableScreen(navController: NavController? = null) {
             }
 
             // ════════════════════════════════════════════════════════════
-            // PRODUCTO DESTACADO (card grande, 1 columna, estilo SNKRS)
+            // PRODUCTO DESTACADO (card grande, 1 columna)
             // ════════════════════════════════════════════════════════════
             if (featuredProduct != null) {
                 item {

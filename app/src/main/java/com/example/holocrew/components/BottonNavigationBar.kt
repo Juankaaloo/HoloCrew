@@ -149,6 +149,17 @@ fun BottomNavigationBar(
         }
 
         // ── Botón flotante del carrito (centrado, elevado) ──
+        // Cambia a verde cuando hay productos en el carrito
+        val hasItems = cartItemCount > 0
+        val cartBgColor by animateColorAsState(
+            targetValue = if (hasItems) Color(0xFF4CAF50) else Color.White,
+            label = "cartBg"
+        )
+        val cartIconColor by animateColorAsState(
+            targetValue = if (hasItems) Color.White else Color.Black,
+            label = "cartIcon"
+        )
+
         Box(
             modifier = Modifier
                 .size(58.dp)
@@ -160,40 +171,18 @@ fun BottomNavigationBar(
                     spotColor = Color.Black.copy(alpha = 0.18f)
                 )
                 .clip(RoundedCornerShape(18.dp))
-                .background(Color.White)
+                .background(cartBgColor)
                 .clickable {
                     navController.navigate(Screen.Cart.route) { launchSingleTop = true }
                 },
             contentAlignment = Alignment.Center
         ) {
-            // Icono del carrito
             Icon(
                 imageVector = Icons.Filled.ShoppingCart,
                 contentDescription = "Carrito",
-                tint = Color.Black,
+                tint = cartIconColor,
                 modifier = Modifier.size(24.dp)
             )
-
-            // ── Badge con número de items (solo visible si hay items) ──
-            if (cartItemCount > 0) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = 4.dp, y = (-2).dp)
-                        .size(20.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFE53935)),  // Rojo para el badge
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        // Si hay más de 9 items, mostrar "9+"
-                        text = if (cartItemCount > 9) "9+" else "$cartItemCount",
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
         }
     }
 }

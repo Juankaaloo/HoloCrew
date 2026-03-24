@@ -112,7 +112,7 @@ fun HomeScreen(navController: NavController) {
                     imageRes = R.drawable.footwear,
                     label = "NUEVO DROP",
                     title = "HOLOCREW\nFOOTWEAR",
-                    description = "Exclusivo con los Roneantes. Disponibilidad limitada.",
+                    description = "Exclusivo para miembros. Disponibilidad limitada.",
                     onShopClick = { navController.navigate("available") { launchSingleTop = true } }
                 )
             }
@@ -142,6 +142,7 @@ fun HomeScreen(navController: NavController) {
             // ═════════════════════════════════════════════════════════
             // 3. SECCIÓN NEGRA — "Exclusivos HoloCrew"
             // ═════════════════════════════════════════════════════════
+            item { Spacer(Modifier.height(24.dp)) }
             item {
                 DarkSection(
                     title = "EXCLUSIVOS HOLOCREW",
