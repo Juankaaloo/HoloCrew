@@ -1,19 +1,3 @@
-/**
- * FavoritesScreen.kt
- *
- * Pantalla de productos favoritos del usuario en HoloCrew.
- * Muestra todos los productos que el usuario ha marcado con el corazón
- * desde Available o ProductDetail, en un grid de 2 columnas.
- *
- * Lee los IDs de favoritos desde FavoritesManager (singleton global)
- * y busca los productos correspondientes en mockProducts.
- *
- * Funcionalidades:
- *  - Ver todos los productos marcados como favoritos
- *  - Quitar de favoritos desde esta pantalla
- *  - Navegar al detalle de cada producto
- *  - Estado vacío cuando no hay favoritos
- */
 package com.example.holocrew.ui.favorites
 
 import androidx.compose.foundation.Image
@@ -47,11 +31,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,102 +47,59 @@ import androidx.navigation.NavController
 import com.example.holocrew.data.FavoritesManager
 import com.example.holocrew.ui.product.ProductDetail
 import com.example.holocrew.ui.product.mockProducts
+import kotlinx.coroutines.launch
 
-/**
- * Pantalla de productos favoritos.
- *
- * Observa el FavoritesManager y se actualiza automáticamente
- * cuando se añaden o quitan favoritos desde cualquier pantalla.
- *
- * @param navController Controlador de navegación para volver y navegar al detalle
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(navController: NavController) {
 
-    // Observar los IDs de favoritos desde el gestor global
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
 
-    // Obtener los productos completos que coinciden con los IDs favoritos
-    val favoriteProducts = mockProducts.filter { favoriteIds.contains(it.id) }
+    // Los IDs ahora son String, comparamos con product.id.toString()
+    val favoriteProducts = mockProducts.filter { favoriteIds.contains(it.id.toString()) }
 
     Scaffold(
-        // ── Barra superior con título y botón volver ──
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "Mis Favoritos",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
-                    )
+                    Text(text = "Mis Favoritos", fontWeight = FontWeight.Bold, fontSize = 22.sp)
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = Color.Black
-                        )
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.Black)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = Color.Black
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White, titleContentColor = Color.Black)
             )
         },
         containerColor = Color.White
     ) { paddingValues ->
 
-        // ════════════════════════════════════════════════════════════
-        // ESTADO VACÍO: Cuando no hay favoritos
-        // ════════════════════════════════════════════════════════════
         if (favoriteProducts.isEmpty()) {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Icono grande de corazón vacío
                     Icon(
                         imageVector = Icons.Filled.FavoriteBorder,
                         contentDescription = null,
                         tint = Color(0xFFCCCCCC),
                         modifier = Modifier.size(80.dp)
                     )
-
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "No tienes favoritos",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-
-                    Text(
-                        text = "Explora y marca los productos que te gusten",
-                        fontSize = 14.sp,
-                        color = Color(0xFF9E9E9E),
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+                    Text("No tienes favoritos", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                    Text("Explora y marca los productos que te gusten", fontSize = 14.sp, color = Color(0xFF9E9E9E), modifier = Modifier.padding(top = 8.dp))
                 }
             }
         } else {
-
-            // ════════════════════════════════════════════════════════════
-            // GRID DE FAVORITOS: 2 columnas
-            // ════════════════════════════════════════════════════════════
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
                 contentPadding = PaddingValues(bottom = 40.dp)
             ) {
-                // Contador
                 item {
                     Text(
                         text = "${favoriteProducts.size} producto${if (favoriteProducts.size != 1) "s" else ""}",
@@ -166,13 +109,10 @@ fun FavoritesScreen(navController: NavController) {
                     )
                 }
 
-                // Grid de 2 columnas
                 val rows = favoriteProducts.chunked(2)
                 items(rows) { rowProducts ->
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         rowProducts.forEach { product ->
@@ -183,7 +123,10 @@ fun FavoritesScreen(navController: NavController) {
                                     navController.navigate("product_detail/${product.id}")
                                 },
                                 onRemoveFavorite = {
-                                    FavoritesManager.toggleFavorite(product.id)
+                                    // ✅ Correcto: context + productId como String dentro de corrutina
+                                    scope.launch {
+                                        FavoritesManager.toggleFavorite(context, product.id)
+                                    }
                                 }
                             )
                         }
@@ -198,20 +141,6 @@ fun FavoritesScreen(navController: NavController) {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// COMPONENTES
-// ══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Card de producto favorito.
- * Similar a ProductGridCard pero con corazón rojo lleno (es favorito seguro).
- * Al pulsar el corazón se quita de favoritos.
- *
- * @param product Datos del producto
- * @param modifier Modifier externo (para weight del grid)
- * @param onClick Callback al pulsar la card (navega al detalle)
- * @param onRemoveFavorite Callback al pulsar el corazón (quita de favoritos)
- */
 @Composable
 fun FavoriteProductCard(
     product: ProductDetail,
@@ -219,33 +148,20 @@ fun FavoriteProductCard(
     onClick: () -> Unit = {},
     onRemoveFavorite: () -> Unit = {}
 ) {
-    Column(
-        modifier = modifier.clickable { onClick() }
-    ) {
-        // ── Imagen con corazón ──
+    Column(modifier = modifier.clickable { onClick() }) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color(0xFFF5F5F5))
+            modifier = Modifier.fillMaxWidth().height(200.dp)
+                .clip(RoundedCornerShape(14.dp)).background(Color(0xFFF5F5F5))
         ) {
             Image(
                 painter = painterResource(id = product.imageRes),
                 contentDescription = product.title,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(14.dp)),
+                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)),
                 contentScale = ContentScale.Crop
             )
-
-            // Corazón rojo (siempre lleno porque es favorito)
             IconButton(
                 onClick = onRemoveFavorite,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(4.dp)
-                    .size(32.dp)
+                modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(32.dp)
             ) {
                 Icon(
                     imageVector = Icons.Filled.Favorite,
@@ -255,36 +171,9 @@ fun FavoriteProductCard(
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(10.dp))
-
-        // Nombre
-        Text(
-            text = product.title,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color.Black,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        // Subtítulo
-        Text(
-            text = product.subtitle,
-            fontSize = 13.sp,
-            color = Color(0xFF666666),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 2.dp)
-        )
-
-        // Precio
-        Text(
-            text = product.price,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black,
-            modifier = Modifier.padding(top = 4.dp)
-        )
+        Text(product.title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(product.subtitle, fontSize = 13.sp, color = Color(0xFF666666), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
+        Text(product.price, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(top = 4.dp))
     }
 }

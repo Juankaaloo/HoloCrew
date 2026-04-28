@@ -1,21 +1,3 @@
-/**
- * HomeScreen.kt
- *
- * Pantalla principal de la aplicación HoloCrew.
- * Feed vertical con diseño premium inspirado en SNKRS:
- *
- *  1. Hero Banner: imagen a pantalla completa con gradiente y CTA
- *  2. Pager horizontal: cards de drops a ancho completo con scroll lateral
- *  3. Sección negra "Exclusivos": fondo negro con carrusel de productos
- *  4. Cards SNKRS estándar: subtítulo + título + imagen + Notifícame
- *  5. Sección gris "Colección": fondo gris con carrusel
- *  6. Más cards y secciones intercaladas
- *  7. Sección "En Tendencia": cards grandes con rating y marca
- *  8. Banner final promocional
- *
- * Fondo blanco con secciones negras y grises intercaladas para contraste.
- * Sin emojis. Todo con datos mock estáticos.
- */
 package com.example.holocrew.ui.home
 
 import androidx.compose.foundation.Image
@@ -51,35 +33,29 @@ import com.example.holocrew.components.CustomTopAppBar
 import com.example.holocrew.data.FavoritesManager
 import com.example.holocrew.ui.product.ProductDetail
 import com.example.holocrew.ui.product.mockProducts
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
-// ══════════════════════════════════════════════════════════════════════════════
-// MODELO DE DATOS LOCAL
-// ══════════════════════════════════════════════════════════════════════════════
-
-/** Modelo para los drops destacados del feed */
+// ✅ FIX: id cambiado de Int a String
 data class FeedProduct(
-    val id: Int,
+    val id: String,
     val subtitle: String,
     val title: String,
     val imageRes: Int,
     val price: String
 )
 
-// ══════════════════════════════════════════════════════════════════════════════
-// PANTALLA PRINCIPAL
-// ══════════════════════════════════════════════════════════════════════════════
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
 
-    // ── Datos mock ──
+    // ✅ FIX: IDs son ahora UUIDs reales de la BDD
     val feedProducts = remember {
         listOf(
-            FeedProduct(1, "Holo Crew · Hoodie", "Pannel Hoodie\nBlack Edition", R.drawable.pannels_hoodie, "$129.99"),
-            FeedProduct(4, "Holo Crew · Polo", "Glory Holo Polo\nWhite", R.drawable.glory_holo_polo, "$199.99"),
-            FeedProduct(6, "Holo Crew · Edición Limitada", "Off-Road Racing Cap\nSolo 500 unidades", R.drawable.offroad_racing_cap, "$299.99"),
-            FeedProduct(5, "Holo Crew · Accesorios", "Shoulder Bag\nBlack Leather", R.drawable.shoulder_bag_holo_blackleather, "$249.99")
+            FeedProduct("2f275839-4230-11f1-a0bc-18c04d629171", "Holo Crew · Hoodie", "Pannel Hoodie\nBlack Edition", R.drawable.pannels_hoodie, "129.99€"),
+            FeedProduct("2f306720-4230-11f1-a0bc-18c04d629171", "Holo Crew · Polo", "Glory Holo Polo\nWhite", R.drawable.glory_holo_polo, "199.99€"),
+            FeedProduct("2f308ca4-4230-11f1-a0bc-18c04d629171", "Holo Crew · Edición Limitada", "Off-Road Racing Cap\nSolo 500 unidades", R.drawable.offroad_racing_cap, "299.99€"),
+            FeedProduct("2f3089b3-4230-11f1-a0bc-18c04d629171", "Holo Crew · Accesorios", "Shoulder Bag\nBlack Leather", R.drawable.shoulder_bag_holo_blackleather, "249.99€")
         )
     }
 
@@ -104,9 +80,6 @@ fun HomeScreen(navController: NavController) {
             contentPadding = PaddingValues(bottom = 80.dp)
         ) {
 
-            // ═════════════════════════════════════════════════════════
-            // 1. HERO BANNER — Imagen a pantalla completa con gradiente
-            // ═════════════════════════════════════════════════════════
             item {
                 HeroBanner(
                     imageRes = R.drawable.footwear,
@@ -117,9 +90,6 @@ fun HomeScreen(navController: NavController) {
                 )
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 2. PAGER HORIZONTAL — Drops a ancho completo
-            // ═════════════════════════════════════════════════════════
             item {
                 Column(modifier = Modifier.padding(top = 24.dp)) {
                     SectionHeader(title = "DROPS DESTACADOS", actionText = "Ver todo", onAction = {
@@ -139,9 +109,6 @@ fun HomeScreen(navController: NavController) {
                 }
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 3. SECCIÓN NEGRA — "Exclusivos HoloCrew"
-            // ═════════════════════════════════════════════════════════
             item { Spacer(Modifier.height(24.dp)) }
             item {
                 DarkSection(
@@ -153,18 +120,12 @@ fun HomeScreen(navController: NavController) {
                 )
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 4. CARD SNKRS ESTÁNDAR
-            // ═════════════════════════════════════════════════════════
             item {
                 MainProductCard(product = feedProducts[0], onClick = {
                     navController.navigate("product_detail/${feedProducts[0].id}")
                 })
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 5. SECCIÓN GRIS — "Última oportunidad"
-            // ═════════════════════════════════════════════════════════
             item {
                 GraySection(
                     title = "Última oportunidad,\n¡aprovéchala!",
@@ -174,71 +135,53 @@ fun HomeScreen(navController: NavController) {
                 )
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 6. CARD SNKRS ESTÁNDAR 2
-            // ═════════════════════════════════════════════════════════
             item {
                 MainProductCard(product = feedProducts[1], onClick = {
                     navController.navigate("product_detail/${feedProducts[1].id}")
                 })
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 7. BANNER PROMOCIONAL NEGRO
-            // ═════════════════════════════════════════════════════════
             item {
                 PromoBanner(onExploreClick = {
                     navController.navigate("upcoming") { launchSingleTop = true }
                 })
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 8. SECCIÓN "NUEVOS LANZAMIENTOS"
-            // ═════════════════════════════════════════════════════════
             item {
-                SectionHeader(title = "NUEVOS LANZAMIENTOS", actionText = "Ver todo", onAction = {
-                    navController.navigate("available") { launchSingleTop = true }
-                })
-                Spacer(Modifier.height(12.dp))
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(collectionProducts.takeLast(4)) { product ->
-                        SmallProductCard(product = product, onClick = {
-                            navController.navigate("product_detail/${product.id}")
-                        })
+                Column(modifier = Modifier.padding(top = 24.dp, bottom = 24.dp)) {
+                    SectionHeader(title = "NUEVOS LANZAMIENTOS", actionText = "Ver todo", onAction = {
+                        navController.navigate("available") { launchSingleTop = true }
+                    })
+                    Spacer(Modifier.height(12.dp))
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        items(newProducts) { product ->
+                            PagerCard(
+                                product = FeedProduct(product.id, product.brand, "${product.title}\n${product.subtitle}", product.imageRes, product.price),
+                                onClick = { navController.navigate("product_detail/${product.id}") }
+                            )
+                        }
                     }
                 }
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 9. CARD SNKRS ESTÁNDAR 3
-            // ═════════════════════════════════════════════════════════
-            item {
-                MainProductCard(product = feedProducts[2], onClick = {
-                    navController.navigate("product_detail/${feedProducts[2].id}")
-                })
-            }
-
-            // ═════════════════════════════════════════════════════════
-            // 10. EN TENDENCIA — Cards grandes con rating
-            // ═════════════════════════════════════════════════════════
             item {
                 TrendingSection(
                     products = trendingProducts,
-                    onProductClick = { navController.navigate("product_detail/${it.id}") }
+                    onProductClick = { navController.navigate("product_detail/${it.id}") },
+                    onSeeAllClick = { navController.navigate("available") { launchSingleTop = true } }
                 )
             }
 
-            // ═════════════════════════════════════════════════════════
-            // 11. CARD SNKRS ESTÁNDAR 4
-            // ═════════════════════════════════════════════════════════
             item {
-                MainProductCard(product = feedProducts[3], onClick = {
-                    navController.navigate("product_detail/${feedProducts[3].id}")
+                FinalBanner(onClick = {
+                    navController.navigate("available") { launchSingleTop = true }
                 })
             }
+
+            item { Spacer(Modifier.height(24.dp)) }
         }
     }
 }
@@ -247,161 +190,105 @@ fun HomeScreen(navController: NavController) {
 // COMPONENTES
 // ══════════════════════════════════════════════════════════════════════════════
 
-/** Header de sección reutilizable: título + "Ver todo" */
-@Composable
-fun SectionHeader(title: String, actionText: String? = null, onAction: () -> Unit = {}) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.Bottom
-    ) {
-        Text(text = title, fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color.Black, letterSpacing = 0.5.sp)
-        if (actionText != null) {
-            Text(
-                text = actionText,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xFF666666),
-                modifier = Modifier.clickable { onAction() }
-            )
-        }
-    }
-}
-
-/**
- * Hero Banner — Imagen a pantalla completa con gradiente oscuro y CTA.
- */
 @Composable
 fun HeroBanner(imageRes: Int, label: String, title: String, description: String, onShopClick: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth().height(520.dp)) {
-        // Imagen de fondo
-        Image(
-            painter = painterResource(id = imageRes),
-            contentDescription = title,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        // Gradiente
-        Box(
-            modifier = Modifier.fillMaxWidth().height(300.dp).align(Alignment.BottomCenter)
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.9f))))
-        )
-        // Contenido
-        Column(modifier = Modifier.fillMaxWidth().align(Alignment.BottomCenter).padding(horizontal = 20.dp, vertical = 28.dp)) {
-            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), letterSpacing = 3.sp)
+    Box(modifier = Modifier.fillMaxWidth().height(460.dp)) {
+        Image(painterResource(id = imageRes), "Banner", modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)))))
+        Column(modifier = Modifier.align(Alignment.BottomStart).padding(horizontal = 20.dp, vertical = 28.dp)) {
+            Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), letterSpacing = 2.sp)
             Spacer(Modifier.height(8.dp))
-            Text(title, fontSize = 36.sp, fontWeight = FontWeight.Black, color = Color.White, lineHeight = 40.sp, letterSpacing = (-1).sp)
+            Text(title, fontSize = 34.sp, fontWeight = FontWeight.Black, color = Color.White, lineHeight = 38.sp)
             Spacer(Modifier.height(8.dp))
             Text(description, fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f))
             Spacer(Modifier.height(20.dp))
-            Button(
-                onClick = onShopClick,
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                modifier = Modifier.height(48.dp)
-            ) {
-                Text("COMPRAR AHORA", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp, letterSpacing = 1.sp)
-                Spacer(Modifier.width(8.dp))
-                Icon(Icons.Filled.ArrowForward, null, tint = Color.Black, modifier = Modifier.size(16.dp))
+            Button(onClick = onShopClick, colors = ButtonDefaults.buttonColors(containerColor = Color.White), shape = RoundedCornerShape(50)) {
+                Text("COMPRAR AHORA", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
             }
         }
     }
 }
 
-/**
- * Pager Card — Card grande horizontal para el slider de drops.
- * Ocupa casi todo el ancho, con imagen a pantalla completa, gradiente y datos.
- */
+@Composable
+fun SectionHeader(title: String, actionText: String = "", onAction: () -> Unit = {}) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black, letterSpacing = 1.sp)
+        if (actionText.isNotEmpty()) {
+            Row(modifier = Modifier.clickable { onAction() }, verticalAlignment = Alignment.CenterVertically) {
+                Text(actionText, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF666666))
+                Icon(Icons.Filled.ArrowForward, null, tint = Color(0xFF666666), modifier = Modifier.size(16.dp).padding(start = 4.dp))
+            }
+        }
+    }
+}
+
 @Composable
 fun PagerCard(product: FeedProduct, onClick: () -> Unit = {}) {
-    Card(
-        modifier = Modifier.width(320.dp).height(400.dp).clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = product.imageRes),
-                contentDescription = product.title,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            // Gradiente inferior
-            Box(
-                modifier = Modifier.fillMaxWidth().height(200.dp).align(Alignment.BottomCenter)
-                    .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))))
-            )
-            // Info
-            Column(modifier = Modifier.align(Alignment.BottomStart).padding(20.dp)) {
-                Text(product.subtitle, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
-                Spacer(Modifier.height(4.dp))
-                Text(product.title, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White, lineHeight = 26.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(product.price, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+    Box(modifier = Modifier.width(300.dp).height(380.dp).clip(RoundedCornerShape(16.dp)).clickable { onClick() }) {
+        Image(painterResource(id = product.imageRes), product.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
+        Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
+            Text(product.subtitle, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
+            Text(product.title, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.White, lineHeight = 26.sp)
+            Spacer(Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(product.price, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37))
+                Spacer(Modifier.weight(1f))
+                Icon(Icons.Outlined.Share, "Compartir", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
             }
         }
     }
 }
 
-/**
- * Sección con fondo negro — Muestra productos exclusivos con estilo premium.
- */
+@Composable
+fun MainProductCard(product: FeedProduct, onClick: () -> Unit = {}) {
+    Column(modifier = Modifier.fillMaxWidth().padding(16.dp).clickable { onClick() }) {
+        Text(product.subtitle, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF9E9E9E))
+        Text(product.title.replace("\n", " "), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Black, modifier = Modifier.padding(top = 4.dp))
+        Spacer(Modifier.height(12.dp))
+        Box(modifier = Modifier.fillMaxWidth().height(300.dp).clip(RoundedCornerShape(16.dp))) {
+            Image(painterResource(id = product.imageRes), product.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(product.price, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+            Text("Comprar", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF666666), modifier = Modifier.clickable { onClick() })
+        }
+    }
+}
+
 @Composable
 fun DarkSection(title: String, subtitle: String, products: List<ProductDetail>, onProductClick: (ProductDetail) -> Unit, onSeeAllClick: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth().background(Color.Black).padding(vertical = 28.dp)
-    ) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
-        ) {
+    Column(modifier = Modifier.fillMaxWidth().background(Color.Black).padding(vertical = 24.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
             Column {
-                Text(title, fontSize = 18.sp, fontWeight = FontWeight.Black, color = Color.White, letterSpacing = 0.5.sp)
-                Text(subtitle, fontSize = 13.sp, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.padding(top = 4.dp))
+                Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White, letterSpacing = 1.sp)
+                Text(subtitle, fontSize = 13.sp, color = Color.White.copy(alpha = 0.5f), modifier = Modifier.padding(top = 4.dp))
             }
             Text("Ver todo", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFFD4AF37), modifier = Modifier.clickable { onSeeAllClick() })
         }
-
         Spacer(Modifier.height(16.dp))
-
-        // Carrusel
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(products) { product ->
-                DarkProductCard(product = product, onClick = { onProductClick(product) })
-            }
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(products) { product -> DarkProductCard(product = product, onClick = { onProductClick(product) }) }
         }
     }
 }
 
-/** Card de producto sobre fondo negro */
 @Composable
 fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
     val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
     val isFav = favoriteIds.contains(product.id)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.width(170.dp).clickable { onClick() }) {
         Box(modifier = Modifier.fillMaxWidth().height(210.dp).clip(RoundedCornerShape(12.dp)).background(Color(0xFF1A1A1A))) {
-            Image(
-                painter = painterResource(id = product.imageRes),
-                contentDescription = product.title,
-                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
-            )
+            Image(painterResource(id = product.imageRes), product.title, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
             IconButton(
-                onClick = { FavoritesManager.toggleFavorite(product.id) },
+                onClick = { scope.launch { FavoritesManager.toggleFavorite(context, product.id) } },
                 modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(30.dp)
             ) {
-                Icon(
-                    if (isFav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    "Favorito",
-                    tint = if (isFav) Color.Red else Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(16.dp)
-                )
+                Icon(if (isFav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorito", tint = if (isFav) Color.Red else Color.White.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -410,58 +297,35 @@ fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
     }
 }
 
-/**
- * Sección con fondo gris claro — Para colecciones y agrupaciones.
- */
 @Composable
 fun GraySection(title: String, products: List<ProductDetail>, onProductClick: (ProductDetail) -> Unit, onSeeAllClick: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth().background(Color(0xFFF5F5F5)).padding(vertical = 24.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom
-        ) {
+    Column(modifier = Modifier.fillMaxWidth().background(Color(0xFFF5F5F5)).padding(vertical = 24.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
             Text(text = title, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.Black, lineHeight = 26.sp, modifier = Modifier.weight(1f))
             Text("Ver todo", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF666666), modifier = Modifier.clickable { onSeeAllClick() }.padding(start = 16.dp, bottom = 4.dp))
         }
         Spacer(Modifier.height(16.dp))
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(products) { product ->
-                SmallProductCard(product = product, onClick = { onProductClick(product) })
-            }
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(products) { product -> SmallProductCard(product = product, onClick = { onProductClick(product) }) }
         }
     }
 }
 
-/** Card de producto estándar para carruseles */
 @Composable
 fun SmallProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
     val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
     val isFav = favoriteIds.contains(product.id)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     Column(modifier = Modifier.width(170.dp).clickable { onClick() }) {
         Box(modifier = Modifier.fillMaxWidth().height(210.dp).clip(RoundedCornerShape(12.dp)).background(Color.White)) {
-            Image(
-                painter = painterResource(id = product.imageRes),
-                contentDescription = product.title,
-                modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
-                contentScale = ContentScale.Crop
-            )
+            Image(painterResource(id = product.imageRes), product.title, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)), contentScale = ContentScale.Crop)
             IconButton(
-                onClick = { FavoritesManager.toggleFavorite(product.id) },
+                onClick = { scope.launch { FavoritesManager.toggleFavorite(context, product.id) } },
                 modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(30.dp)
             ) {
-                Icon(
-                    if (isFav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    "Favorito",
-                    tint = if (isFav) Color.Red else Color(0xFFBDBDBD),
-                    modifier = Modifier.size(16.dp)
-                )
+                Icon(if (isFav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorito", tint = if (isFav) Color.Red else Color(0xFFBDBDBD), modifier = Modifier.size(16.dp))
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -471,125 +335,54 @@ fun SmallProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
     }
 }
 
-/** Card SNKRS estándar: subtítulo + título + imagen + compartir/notifícame */
-@Composable
-fun MainProductCard(product: FeedProduct, onClick: () -> Unit = {}) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
-            Text(product.subtitle, fontSize = 14.sp, color = Color(0xFF666666))
-            Spacer(Modifier.height(4.dp))
-            Text(product.title, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.Black, lineHeight = 30.sp)
-            Spacer(Modifier.height(20.dp))
-            Box(modifier = Modifier.fillMaxWidth().height(260.dp), contentAlignment = Alignment.Center) {
-                Image(
-                    painter = painterResource(id = product.imageRes),
-                    contentDescription = product.title,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Fit
-                )
-            }
-            Spacer(Modifier.height(20.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Outlined.Share, "Compartir", tint = Color.Black, modifier = Modifier.size(22.dp))
-                }
-                Button(
-                    onClick = {},
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
-                ) {
-                    Text("Notifícame", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White)
-                }
-            }
-        }
-    }
-}
-
-/** Banner promocional negro con acento dorado */
 @Composable
 fun PromoBanner(onExploreClick: () -> Unit) {
-    Box(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)
-            .clip(RoundedCornerShape(20.dp)).background(Color.Black).padding(28.dp)
-    ) {
+    Box(modifier = Modifier.fillMaxWidth().padding(16.dp).clip(RoundedCornerShape(16.dp)).background(Color.Black).padding(24.dp)) {
         Column {
-            Text("PROXIMAMENTE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), letterSpacing = 3.sp)
-            Spacer(Modifier.height(12.dp))
-            Text("Winter\nCollection 2025", fontSize = 28.sp, fontWeight = FontWeight.Black, color = Color.White, lineHeight = 32.sp)
+            Text("PRÓXIMOS DROPS", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), letterSpacing = 2.sp)
             Spacer(Modifier.height(8.dp))
-            Text("La colección más esperada del año.\nReserva tu lugar.", fontSize = 14.sp, color = Color.White.copy(alpha = 0.7f), lineHeight = 20.sp)
-            Spacer(Modifier.height(20.dp))
-            OutlinedButton(
-                onClick = onExploreClick,
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                border = ButtonDefaults.outlinedButtonBorder.copy(brush = Brush.linearGradient(listOf(Color.White, Color.White)))
-            ) {
-                Text("EXPLORAR DROPS", fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 1.sp)
-                Spacer(Modifier.width(8.dp))
-                Icon(Icons.Filled.ArrowForward, null, modifier = Modifier.size(14.dp))
+            Text("No te pierdas\nlos lanzamientos", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White, lineHeight = 28.sp)
+            Spacer(Modifier.height(16.dp))
+            OutlinedButton(onClick = onExploreClick, shape = RoundedCornerShape(50), border = ButtonDefaults.outlinedButtonBorder.copy(brush = Brush.linearGradient(listOf(Color(0xFFD4AF37), Color(0xFFD4AF37))))) {
+                Text("Explorar", color = Color(0xFFD4AF37), fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
-/** Sección En Tendencia con cards grandes y rating */
 @Composable
-fun TrendingSection(products: List<ProductDetail>, onProductClick: (ProductDetail) -> Unit = {}) {
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
-        SectionHeader(title = "EN TENDENCIA")
+fun TrendingSection(products: List<ProductDetail>, onProductClick: (ProductDetail) -> Unit, onSeeAllClick: () -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text("EN TENDENCIA", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black, letterSpacing = 1.sp)
+            Text("Ver todo", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF666666), modifier = Modifier.clickable { onSeeAllClick() })
+        }
         Spacer(Modifier.height(14.dp))
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             items(products) { product -> TrendingCard(product = product, onClick = { onProductClick(product) }) }
         }
     }
 }
 
-/** Card de tendencia: grande, con rating, marca y reseñas */
 @Composable
 fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
     val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
     val isFav = favoriteIds.contains(product.id)
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
-    Card(
-        modifier = Modifier.width(220.dp).clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
-    ) {
+    Card(modifier = Modifier.width(220.dp).clickable { onClick() }, shape = RoundedCornerShape(16.dp), elevation = CardDefaults.cardElevation(defaultElevation = 0.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))) {
         Column {
             Box(modifier = Modifier.fillMaxWidth().height(240.dp)) {
-                Image(
-                    painter = painterResource(id = product.imageRes),
-                    contentDescription = product.title,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)),
-                    contentScale = ContentScale.Crop
-                )
-                // Badge rating
-                Box(
-                    modifier = Modifier.padding(10.dp).align(Alignment.TopStart).clip(RoundedCornerShape(8.dp))
-                        .background(Color.Black.copy(alpha = 0.7f)).padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
+                Image(painterResource(id = product.imageRes), product.title, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)), contentScale = ContentScale.Crop)
+                Box(modifier = Modifier.padding(10.dp).align(Alignment.TopStart).clip(RoundedCornerShape(8.dp)).background(Color.Black.copy(alpha = 0.7f)).padding(horizontal = 8.dp, vertical = 4.dp)) {
                     Text("${product.rating}", color = Color(0xFFFFC107), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
                 IconButton(
-                    onClick = { FavoritesManager.toggleFavorite(product.id) },
+                    onClick = { scope.launch { FavoritesManager.toggleFavorite(context, product.id) } },
                     modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).size(32.dp)
                 ) {
-                    Icon(
-                        if (isFav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                        "Favorito", tint = if (isFav) Color.Red else Color.White.copy(alpha = 0.8f),
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Icon(if (isFav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorito", tint = if (isFav) Color.Red else Color.White.copy(alpha = 0.8f), modifier = Modifier.size(18.dp))
                 }
             }
             Column(modifier = Modifier.padding(14.dp)) {
@@ -602,6 +395,23 @@ fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
                     Text(product.price, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.Black)
                     Text("${product.reviewCount} reseñas", fontSize = 11.sp, color = Color(0xFF9E9E9E))
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun FinalBanner(onClick: () -> Unit) {
+    Box(modifier = Modifier.fillMaxWidth().padding(16.dp).clip(RoundedCornerShape(16.dp)).background(Brush.horizontalGradient(listOf(Color(0xFF1A1A1A), Color(0xFF333333)))).clickable { onClick() }.padding(24.dp)) {
+        Column {
+            Text("HOLOCREW", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFD4AF37), letterSpacing = 2.sp)
+            Spacer(Modifier.height(8.dp))
+            Text("Descubre toda\nla colección", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.White, lineHeight = 30.sp)
+            Spacer(Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Ver catálogo", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Spacer(Modifier.width(8.dp))
+                Icon(Icons.Filled.ArrowForward, null, tint = Color.White, modifier = Modifier.size(18.dp))
             }
         }
     }

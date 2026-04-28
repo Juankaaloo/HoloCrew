@@ -1,18 +1,6 @@
-/**
- * RegisterScreen.kt
- *
- * Pantalla de registro de nuevo usuario en HoloCrew.
- * Se accede desde el botón "Crear cuenta" de LoginScreen.
- * Diseño consistente con LoginScreen:
- *  - Logo de la marca
- *  - Campos: nombre, email, contraseña, confirmar contraseña
- *  - Botón "Crear cuenta" (navega al Home)
- *  - Enlace "Ya tengo cuenta" (vuelve al Login)
- *
- * Al ser solo front-end, no hay registro real.
- */
 package com.example.holocrew.ui.auth
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -31,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,24 +30,29 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.holocrew.R
+import com.example.holocrew.data.CartManager
+import com.example.holocrew.data.FavoritesManager
+import com.example.holocrew.data.TokenManager
+import com.example.holocrew.data.network.RegisterRequest
+import com.example.holocrew.data.network.RetrofitClient
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(navController: NavController) {
-
-    // ── Estados de los campos ──
     var name by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -66,14 +60,9 @@ fun RegisterScreen(navController: NavController) {
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Spacer(Modifier.height(20.dp))
 
-            // ═══ BOTÓN VOLVER ═══
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row(modifier = Modifier.fillMaxWidth()) {
                 IconButton(onClick = { navController.navigateUp() }) {
                     Icon(Icons.Filled.ArrowBack, "Volver", tint = Color.Black)
                 }
@@ -81,27 +70,24 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(Modifier.height(16.dp))
 
-            // ═══ LOGO ═══
             Image(
                 painter = painterResource(id = R.drawable.logito),
-                contentDescription = "Logo HoloCrew",
+                contentDescription = "Logo",
                 modifier = Modifier.height(40.dp).width(120.dp),
                 contentScale = ContentScale.Fit
             )
 
             Spacer(Modifier.height(32.dp))
 
-            // ═══ TÍTULO ═══
             Text(
-                text = "Crear cuenta",
+                "Crear cuenta",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
                 modifier = Modifier.fillMaxWidth()
             )
-
             Text(
-                text = "Únete a la comunidad HoloCrew",
+                "Únete a la comunidad HoloCrew",
                 fontSize = 14.sp,
                 color = Color(0xFF9E9E9E),
                 modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
@@ -109,11 +95,10 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(Modifier.height(28.dp))
 
-            // ═══ CAMPO NOMBRE ═══
-            FieldLabel("NOMBRE COMPLETO")
+            // ── NOMBRE ──
+            FieldLabel("NOMBRE")
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = name, onValueChange = { name = it },
                 placeholder = { Text("Tu nombre", color = Color(0xFFBDBDBD)) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -123,11 +108,23 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(Modifier.height(16.dp))
 
-            // ═══ CAMPO EMAIL ═══
+            // ── APELLIDOS ──
+            FieldLabel("APELLIDOS")
+            OutlinedTextField(
+                value = lastName, onValueChange = { lastName = it },
+                placeholder = { Text("Tus apellidos", color = Color(0xFFBDBDBD)) },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = fieldColors(),
+                singleLine = true
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // ── EMAIL ──
             FieldLabel("EMAIL")
             OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
+                value = email, onValueChange = { email = it },
                 placeholder = { Text("tu@email.com", color = Color(0xFFBDBDBD)) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -138,11 +135,10 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(Modifier.height(16.dp))
 
-            // ═══ CAMPO CONTRASEÑA ═══
+            // ── CONTRASEÑA ──
             FieldLabel("CONTRASEÑA")
             OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
+                value = password, onValueChange = { password = it },
                 placeholder = { Text("Mínimo 8 caracteres", color = Color(0xFFBDBDBD)) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -154,8 +150,7 @@ fun RegisterScreen(navController: NavController) {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         Icon(
                             if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            if (passwordVisible) "Ocultar" else "Mostrar",
-                            tint = Color(0xFF9E9E9E)
+                            null, tint = Color(0xFF9E9E9E)
                         )
                     }
                 }
@@ -163,11 +158,10 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(Modifier.height(16.dp))
 
-            // ═══ CAMPO CONFIRMAR CONTRASEÑA ═══
+            // ── CONFIRMAR CONTRASEÑA ──
             FieldLabel("CONFIRMAR CONTRASEÑA")
             OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it },
+                value = confirmPassword, onValueChange = { confirmPassword = it },
                 placeholder = { Text("Repite tu contraseña", color = Color(0xFFBDBDBD)) },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
@@ -179,8 +173,7 @@ fun RegisterScreen(navController: NavController) {
                     IconButton(onClick = { confirmVisible = !confirmVisible }) {
                         Icon(
                             if (confirmVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            if (confirmVisible) "Ocultar" else "Mostrar",
-                            tint = Color(0xFF9E9E9E)
+                            null, tint = Color(0xFF9E9E9E)
                         )
                     }
                 }
@@ -188,28 +181,61 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(Modifier.height(32.dp))
 
-            // ═══ BOTÓN CREAR CUENTA ═══
+            // ── BOTÓN CREAR CUENTA ──
             Button(
                 onClick = {
-                    // Sin registro real — navegar directamente al Home
-                    navController.navigate("home") {
-                        popUpTo("login") { inclusive = true }
+                    when {
+                        name.isBlank() || email.isBlank() || password.isBlank() ->
+                            Toast.makeText(context, "Rellena todos los campos", Toast.LENGTH_SHORT).show()
+                        password != confirmPassword ->
+                            Toast.makeText(context, "Las contraseñas no coinciden", Toast.LENGTH_SHORT).show()
+                        password.length < 8 ->
+                            Toast.makeText(context, "La contraseña debe tener al menos 8 caracteres", Toast.LENGTH_SHORT).show()
+                        else -> scope.launch {
+                            isLoading = true
+                            try {
+                                val response = RetrofitClient.api.register(
+                                    RegisterRequest(name.trim(), lastName.trim(), email.trim(), password)
+                                )
+                                if (response.isSuccessful && response.body()?.success == true) {
+                                    val data = response.body()!!.data!!
+                                    TokenManager.saveToken(
+                                        context,
+                                        token = data.token,
+                                        userId = data.user.id,
+                                        userName = "${data.user.first_name} ${data.user.last_name}",
+                                        userEmail = data.user.email,
+                                        userTier = data.user.membership_tier
+                                    )
+                                    CartManager.loadCart(context)
+                                    FavoritesManager.loadFavorites(context)
+                                    navController.navigate("home") { popUpTo("login") { inclusive = true } }
+                                } else {
+                                    Toast.makeText(context, response.body()?.message ?: "Error al registrarse", Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Error de conexión. ¿Está el servidor encendido?", Toast.LENGTH_LONG).show()
+                            }
+                            isLoading = false
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth().height(54.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                enabled = !isLoading
             ) {
-                Text("Crear cuenta", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(
+                    text = if (isLoading) "Cargando..." else "Crear cuenta",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
             }
 
             Spacer(Modifier.height(20.dp))
 
-            // ═══ YA TENGO CUENTA ═══
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                 Text("¿Ya tienes cuenta? ", fontSize = 14.sp, color = Color(0xFF9E9E9E))
                 Text(
                     "Iniciar sesión",
@@ -222,9 +248,8 @@ fun RegisterScreen(navController: NavController) {
 
             Spacer(Modifier.height(24.dp))
 
-            // ═══ FOOTER ═══
             Text(
-                text = "Al crear tu cuenta, aceptas los Términos de Servicio\ny la Política de Privacidad de HoloCrew",
+                "Al crear tu cuenta, aceptas los Términos de Servicio\ny la Política de Privacidad de HoloCrew",
                 fontSize = 11.sp,
                 color = Color(0xFFBDBDBD),
                 textAlign = TextAlign.Center,
@@ -235,11 +260,8 @@ fun RegisterScreen(navController: NavController) {
     }
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// COMPONENTES REUTILIZABLES
-// ══════════════════════════════════════════════════════════════════════════════
+// ── Funciones auxiliares ──────────────────────────────────────────────────────
 
-/** Label de campo de formulario */
 @Composable
 fun FieldLabel(text: String) {
     Text(
@@ -248,11 +270,12 @@ fun FieldLabel(text: String) {
         fontWeight = FontWeight.Bold,
         color = Color(0xFF9E9E9E),
         letterSpacing = 1.sp,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp)
     )
 }
 
-/** Colores reutilizables para OutlinedTextField */
 @Composable
 fun fieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = Color.Black,

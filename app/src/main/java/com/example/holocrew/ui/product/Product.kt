@@ -1,71 +1,18 @@
-/**
- * Product.kt
- *
- * Modelos de datos para los productos de la tienda HoloCrew.
- * Contiene las data classes que representan un producto y sus opciones de color,
- * así como una lista centralizada de datos mock que se reutiliza en todas las
- * pantallas de la app (Available, ProductDetail, etc.).
- *
- * Al ser un proyecto solo front-end, todos los datos están definidos aquí
- * de forma estática. En una versión futura con backend, estos datos vendrían
- * de una API o base de datos.
- */
 package com.example.holocrew.ui.product
 
 import androidx.compose.ui.graphics.Color
 import com.example.holocrew.R
 
-// ══════════════════════════════════════════════════════════════════════════════
-// MODELOS DE DATOS
-// ══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Representa las opciones de color disponibles para un producto.
- *
- * @param name Nombre del color que se muestra al usuario (ej: "Negro", "Azul")
- * @param colorHex Código hexadecimal del color (ej: "#000000") usado para
- *                 parsear y mostrar el círculo de color en la UI
- */
 data class ColorOption(
     val name: String,
     val colorHex: String
 ) {
-    /**
-     * Convierte el string hexadecimal a un objeto Color de Compose.
-     * Se usa directamente en los composables para pintar el círculo de color.
-     */
     val color: Color
         get() = Color(android.graphics.Color.parseColor(colorHex))
 }
 
-/**
- * Modelo completo de un producto de la tienda.
- * Contiene toda la información necesaria para mostrarlo tanto en listados
- * (Available) como en la pantalla de detalle (ProductDetail).
- *
- * @param id Identificador único del producto (usado para navegación)
- * @param title Nombre principal del producto
- * @param subtitle Descripción corta o tipo de producto
- * @param category Categoría del producto (Ropa, Denim, Accesorios, etc.)
- * @param imageRes ID del recurso drawable para la imagen del producto
- * @param status Estado actual (Nuevo, Exclusivo, Más vendido, En oferta, etc.)
- * @param price Precio actual formateado como string (ej: "$129.99")
- * @param originalPrice Precio original antes del descuento (null si no hay oferta)
- * @param brand Marca del producto
- * @param description Descripción detallada del producto
- * @param rating Puntuación media del producto (0.0 a 5.0)
- * @param reviewCount Número total de reseñas
- * @param sizes Lista de tallas disponibles (ej: ["XS", "S", "M", "L", "XL"])
- * @param colors Lista de opciones de color disponibles
- * @param features Lista de características destacadas del producto
- * @param material Composición del material
- * @param careInstructions Instrucciones de cuidado y lavado
- * @param sku Código SKU del producto (referencia interna)
- * @param publishedDate Fecha de publicación del producto
- * @param isFavorite Si el producto está marcado como favorito por el usuario
- */
 data class ProductDetail(
-    val id: Int,
+    val id: String,  // ← Cambiado de Int a String (UUID de la BDD)
     val title: String,
     val subtitle: String,
     val category: String,
@@ -88,213 +35,397 @@ data class ProductDetail(
 )
 
 // ══════════════════════════════════════════════════════════════════════════════
-// DATOS MOCK - Lista centralizada de productos
+// DATOS MOCK — IDs reales de la base de datos MySQL
 // ══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Lista estática de todos los productos disponibles en la tienda.
- *
- * Esta lista se usa como fuente de datos única en toda la app:
- *  - AvailableScreen la usa para mostrar el catálogo con filtros
- *  - ProductDetailScreen busca un producto por ID en esta lista
- *
- * Cada producto tiene información completa: imagen, precio, tallas, colores,
- * descripción, características, etc.
- *
- * NOTA: Las imágenes hacen referencia a drawables en res/drawable/.
- * Asegúrate de tener todos los recursos de imagen disponibles en el proyecto.
- */
 val mockProducts = listOf(
     ProductDetail(
-        id = 1,
-        title = "Holo Pannel Hoodie",
-        subtitle = "Hoodie - Hombre",
+        id = "2f275839-4230-11f1-a0bc-18c04d629171",
+        title = "Pannel Hoodie Black",
+        subtitle = "Hoodie premium - Hombre",
         category = "Ropa",
         imageRes = R.drawable.pannels_hoodie,
         status = "Nuevo",
-        price = "$129.99",
-        originalPrice = "$149.99",
+        price = "129.99€",
+        originalPrice = "149.99€",
         brand = "Holo Crew",
-        description = "Este hoodie resistente, fabricado con tejido premium, es perfecto para el día a día.",
+        description = "Hoodie premium con diseño de paneles. Tejido grueso de alta calidad para el día a día.",
         rating = 4.5f,
         reviewCount = 128,
         sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
-        colors = listOf(
-            ColorOption("Negro", "#000000"),
-            ColorOption("Gris", "#808080"),
-            ColorOption("Verde", "#4CAF50")
-        ),
+        colors = listOf(ColorOption("Negro", "#000000"), ColorOption("Gris", "#808080")),
         features = listOf("Capucha ajustable", "Bolsillo canguro", "Material premium", "Corte moderno"),
         material = "Algodón 80%, Poliéster 20%",
-        careInstructions = "Lavar a máquina con agua fría. No usar lejía.",
-        sku = "HOLO-HD-001",
-        publishedDate = "27 de octubre de 2025"
+        sku = "HOLO-HD-001"
     ),
     ProductDetail(
-        id = 2,
-        title = "Denim Bison Holo",
-        subtitle = "Denim premium edición limitada",
-        category = "Denim",
-        imageRes = R.drawable.bison_denim_holo,
+        id = "2f304b43-4230-11f1-a0bc-18c04d629171",
+        title = "Bands Blue Navy Hoodie",
+        subtitle = "Hoodie con bandas - Hombre",
+        category = "Ropa",
+        imageRes = R.drawable.bands_bluenavy_hoodie,
         status = "Exclusivo",
-        price = "$89.99",
-        originalPrice = "$109.99",
+        price = "119.99€",
+        originalPrice = "139.99€",
         brand = "Holo Crew",
-        description = "Denim premium de edición limitada con acabados exclusivos de la colección HoloCrew.",
+        description = "Hoodie con detalle de bandas en azul marino. Edición especial de la colección clásica.",
+        rating = 4.6f,
+        reviewCount = 95,
+        sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
+        colors = listOf(ColorOption("Azul Marino", "#000080")),
+        features = listOf("Detalle de bandas", "Edición especial", "Tejido premium", "Corte moderno"),
+        material = "Algodón 80%, Poliéster 20%",
+        sku = "HOLO-HD-002"
+    ),
+    ProductDetail(
+        id = "2f30519e-4230-11f1-a0bc-18c04d629171",
+        title = "Bands Garnet Hoodie",
+        subtitle = "Hoodie con bandas - Hombre",
+        category = "Ropa",
+        imageRes = R.drawable.bands_garnet_hoodie,
+        status = "Nuevo",
+        price = "119.99€",
+        brand = "Holo Crew",
+        description = "Hoodie con detalle de bandas en color granate. Pieza premium de la colección HoloCrew.",
+        rating = 4.4f,
+        reviewCount = 72,
+        sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
+        colors = listOf(ColorOption("Granate", "#732F3A")),
+        features = listOf("Detalle de bandas", "Color granate exclusivo", "Tejido premium"),
+        material = "Algodón 80%, Poliéster 20%",
+        sku = "HOLO-HD-003"
+    ),
+    ProductDetail(
+        id = "2f305605-4230-11f1-a0bc-18c04d629171",
+        title = "Bands Red Hoodie",
+        subtitle = "Hoodie con bandas - Hombre",
+        category = "Ropa",
+        imageRes = R.drawable.bands_red_hoodie,
+        status = "Nuevo",
+        price = "124.99€",
+        originalPrice = "144.99€",
+        brand = "Holo Crew",
+        description = "Hoodie en rojo vibrante con detalle de bandas. Ideal para destacar.",
+        rating = 4.5f,
+        reviewCount = 110,
+        sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
+        colors = listOf(ColorOption("Rojo", "#FF0000")),
+        features = listOf("Rojo vibrante", "Detalle de bandas", "Tejido premium"),
+        material = "Algodón 80%, Poliéster 20%",
+        sku = "HOLO-HD-004"
+    ),
+    ProductDetail(
+        id = "2f305bc5-4230-11f1-a0bc-18c04d629171",
+        title = "Zip Crew Black",
+        subtitle = "Sudadera con cremallera",
+        category = "Ropa",
+        imageRes = R.drawable.zip_crew_black,
+        status = "Más vendido",
+        price = "109.99€",
+        originalPrice = "129.99€",
+        brand = "Holo Crew",
+        description = "Sudadera con cremallera completa en negro. Diseño limpio y versátil.",
         rating = 4.7f,
         reviewCount = 342,
-        sizes = listOf("28", "30", "32", "34", "36"),
-        colors = listOf(
-            ColorOption("Azul", "#2196F3"),
-            ColorOption("Negro", "#000000")
-        ),
-        features = listOf("Denim premium", "Edición limitada", "Corte slim", "Acabados exclusivos"),
-        material = "Algodón 100%",
-        careInstructions = "Lavar del revés con agua fría. No usar secadora.",
-        sku = "HOLO-DN-002",
-        publishedDate = "15 de marzo de 2025"
+        sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
+        colors = listOf(ColorOption("Negro", "#000000")),
+        features = listOf("Cremallera completa", "Diseño limpio", "Versátil"),
+        material = "Algodón 85%, Poliéster 15%",
+        sku = "HOLO-ZC-005"
     ),
     ProductDetail(
-        id = 3,
-        title = "Boxer Holo White",
-        subtitle = "Boxer Holo - Corte ajustado",
-        category = "Ropa Interior",
-        imageRes = R.drawable.boxer_holo_white,
-        status = "Más vendido",
-        price = "$30.99",
+        id = "2f306063-4230-11f1-a0bc-18c04d629171",
+        title = "Zip Crew Forest Green",
+        subtitle = "Sudadera con cremallera",
+        category = "Ropa",
+        imageRes = R.drawable.zip_crew_forestgreen,
+        status = "Nuevo",
+        price = "109.99€",
         brand = "Holo Crew",
-        description = "Boxer de corte ajustado con tejido transpirable y elástico premium.",
+        description = "Sudadera con cremallera en verde bosque. Color tendencia de la temporada.",
         rating = 4.3f,
-        reviewCount = 89,
-        sizes = listOf("S", "M", "L", "XL"),
-        colors = listOf(
-            ColorOption("Blanco", "#FFFFFF"),
-            ColorOption("Negro", "#000000"),
-            ColorOption("Gris", "#808080")
-        ),
-        features = listOf("Tejido transpirable", "Elástico premium", "Corte ajustado", "Secado rápido"),
-        material = "Algodón 95%, Elastano 5%",
-        careInstructions = "Lavar a máquina 30°C. No usar lejía.",
-        sku = "HOLO-BX-003",
-        publishedDate = "10 de noviembre de 2024"
+        reviewCount = 58,
+        sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
+        colors = listOf(ColorOption("Verde Bosque", "#228B22")),
+        features = listOf("Color tendencia", "Cremallera completa", "Corte moderno"),
+        material = "Algodón 85%, Poliéster 15%",
+        sku = "HOLO-ZC-006"
     ),
     ProductDetail(
-        id = 4,
+        id = "2f30642a-4230-11f1-a0bc-18c04d629171",
+        title = "Zip Crew Grey",
+        subtitle = "Sudadera con cremallera",
+        category = "Ropa",
+        imageRes = R.drawable.zip_crew_grey,
+        status = "Básico",
+        price = "109.99€",
+        brand = "Holo Crew",
+        description = "Sudadera con cremallera en gris clásico. Básico imprescindible del armario.",
+        rating = 4.2f,
+        reviewCount = 230,
+        sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
+        colors = listOf(ColorOption("Gris", "#808080")),
+        features = listOf("Gris clásico", "Básico imprescindible", "Cremallera completa"),
+        material = "Algodón 85%, Poliéster 15%",
+        sku = "HOLO-ZC-007"
+    ),
+    ProductDetail(
+        id = "2f306720-4230-11f1-a0bc-18c04d629171",
         title = "Glory Holo Polo",
         subtitle = "Polo premium",
         category = "Ropa",
         imageRes = R.drawable.glory_holo_polo,
         status = "En oferta",
-        price = "$199.99",
-        originalPrice = "$249.99",
+        price = "199.99€",
+        originalPrice = "249.99€",
         brand = "Holo Crew",
         description = "Polo premium de la línea Glory con bordado exclusivo y corte elegante.",
         rating = 4.6f,
         reviewCount = 215,
         sizes = listOf("S", "M", "L", "XL", "XXL"),
-        colors = listOf(
-            ColorOption("Blanco", "#FFFFFF"),
-            ColorOption("Negro", "#000000"),
-            ColorOption("Azul", "#1565C0")
-        ),
+        colors = listOf(ColorOption("Blanco", "#FFFFFF"), ColorOption("Negro", "#000000")),
         features = listOf("Bordado exclusivo", "Tejido piqué", "Corte elegante", "Cuello reforzado"),
         material = "Algodón piqué 100%",
-        careInstructions = "Lavar a máquina con agua fría. Planchar a temperatura baja.",
-        sku = "HOLO-PL-004",
-        publishedDate = "5 de septiembre de 2025"
+        sku = "HOLO-PL-008"
     ),
     ProductDetail(
-        id = 5,
-        title = "Shoulder Bag",
-        subtitle = "Bag Holo BlackLeather",
-        category = "Accesorios",
-        imageRes = R.drawable.shoulder_bag_holo_blackleather,
-        status = "Exclusivo",
-        price = "$249.99",
-        brand = "Holo Crew",
-        description = "Bolso de hombro en piel negra con detalles metálicos de la colección HoloCrew.",
-        rating = 4.8f,
-        reviewCount = 67,
-        sizes = listOf("Único"),
-        colors = listOf(
-            ColorOption("Negro", "#000000"),
-            ColorOption("Marrón", "#795548")
-        ),
-        features = listOf("Piel genuina", "Detalles metálicos", "Compartimentos internos", "Correa ajustable"),
-        material = "Piel genuina, herrajes metálicos",
-        careInstructions = "Limpiar con paño húmedo. Aplicar crema para piel.",
-        sku = "HOLO-BG-005",
-        publishedDate = "20 de agosto de 2025"
-    ),
-    ProductDetail(
-        id = 6,
-        title = "Racing Cap",
-        subtitle = "Exclusive cap - Solo 500 unidades",
-        category = "Accesorios",
-        imageRes = R.drawable.offroad_racing_cap,
-        status = "Limitado",
-        price = "$299.99",
-        brand = "Holo Crew",
-        description = "Gorra exclusiva de la línea Racing, edición limitada a 500 unidades numeradas.",
-        rating = 4.9f,
-        reviewCount = 45,
-        sizes = listOf("S/M", "L/XL"),
-        colors = listOf(
-            ColorOption("Negro", "#000000"),
-            ColorOption("Rojo", "#F44336")
-        ),
-        features = listOf("Edición limitada 500 uds", "Numerada", "Bordado premium", "Cierre ajustable"),
-        material = "Algodón canvas, Bordado premium",
-        careInstructions = "Lavar a mano con agua fría. No retorcer.",
-        sku = "HOLO-CP-006",
-        publishedDate = "1 de diciembre de 2025"
-    ),
-    ProductDetail(
-        id = 7,
-        title = "Holo Crew T-Shirt",
+        id = "2f306ab7-4230-11f1-a0bc-18c04d629171",
+        title = "Holo Crew Tops",
         subtitle = "Camiseta básica logo HOLO",
         category = "Ropa",
         imageRes = R.drawable.tops,
         status = "Básico",
-        price = "$49.99",
+        price = "49.99€",
         brand = "Holo Crew",
         description = "Camiseta básica con el logo icónico de HoloCrew. Perfecta para el día a día.",
         rating = 4.2f,
         reviewCount = 530,
         sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
-        colors = listOf(
-            ColorOption("Blanco", "#FFFFFF"),
-            ColorOption("Negro", "#000000"),
-            ColorOption("Gris", "#9E9E9E")
-        ),
+        colors = listOf(ColorOption("Blanco", "#FFFFFF"), ColorOption("Negro", "#000000")),
         features = listOf("Logo estampado", "Algodón suave", "Corte regular", "Costuras reforzadas"),
         material = "Algodón 100%",
-        careInstructions = "Lavar a máquina 30°C. Planchar del revés.",
-        sku = "HOLO-TS-007",
-        publishedDate = "15 de julio de 2025"
+        sku = "HOLO-TS-009"
     ),
     ProductDetail(
-        id = 8,
-        title = "Premium Denim Jacket",
-        subtitle = "Chaqueta denim premium",
+        id = "2f306e08-4230-11f1-a0bc-18c04d629171",
+        title = "Zip Grafiti Black",
+        subtitle = "Sudadera grafiti exclusiva",
+        category = "Ropa",
+        imageRes = R.drawable.zip_grafiti_black,
+        status = "Exclusivo",
+        price = "139.99€",
+        originalPrice = "159.99€",
+        brand = "Holo Crew",
+        description = "Sudadera con estampado grafiti exclusivo en negro. Arte urbano en tu ropa.",
+        rating = 4.8f,
+        reviewCount = 67,
+        sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
+        colors = listOf(ColorOption("Negro", "#000000")),
+        features = listOf("Estampado grafiti exclusivo", "Arte urbano", "Edición limitada"),
+        material = "Algodón 80%, Poliéster 20%",
+        sku = "HOLO-ZG-010"
+    ),
+    ProductDetail(
+        id = "2f307115-4230-11f1-a0bc-18c04d629171",
+        title = "Zip Grafiti Blue Navy",
+        subtitle = "Sudadera grafiti edición limitada",
+        category = "Ropa",
+        imageRes = R.drawable.zip_grafiti_bluenavy,
+        status = "Nuevo",
+        price = "139.99€",
+        brand = "Holo Crew",
+        description = "Sudadera con estampado grafiti en azul marino. Edición limitada.",
+        rating = 4.5f,
+        reviewCount = 45,
+        sizes = listOf("XS", "S", "M", "L", "XL", "XXL"),
+        colors = listOf(ColorOption("Azul Marino", "#000080")),
+        features = listOf("Estampado grafiti", "Azul marino", "Edición limitada"),
+        material = "Algodón 80%, Poliéster 20%",
+        sku = "HOLO-ZG-011"
+    ),
+    ProductDetail(
+        id = "2f3073ed-4230-11f1-a0bc-18c04d629171",
+        title = "Universal Jersey Blue",
+        subtitle = "Jersey deportivo",
+        category = "Ropa",
+        imageRes = R.drawable.universal_jersey_blue,
+        status = "Premium",
+        price = "89.99€",
+        originalPrice = "109.99€",
+        brand = "Holo Crew",
+        description = "Jersey estilo deportivo en azul. Diseño inspirado en equipaciones clásicas.",
+        rating = 4.4f,
+        reviewCount = 156,
+        sizes = listOf("S", "M", "L", "XL"),
+        colors = listOf(ColorOption("Azul", "#2196F3")),
+        features = listOf("Estilo deportivo", "Diseño clásico", "Tejido transpirable"),
+        material = "Poliéster 100%",
+        sku = "HOLO-JR-012"
+    ),
+    ProductDetail(
+        id = "2f3077fc-4230-11f1-a0bc-18c04d629171",
+        title = "Wave Jersey Black",
+        subtitle = "Jersey con diseño de ondas",
+        category = "Ropa",
+        imageRes = R.drawable.wave_jersey_black,
+        status = "Nuevo",
+        price = "94.99€",
+        brand = "Holo Crew",
+        description = "Jersey con diseño de ondas en negro. Pieza única de la colección.",
+        rating = 4.6f,
+        reviewCount = 89,
+        sizes = listOf("S", "M", "L", "XL"),
+        colors = listOf(ColorOption("Negro", "#000000")),
+        features = listOf("Diseño de ondas", "Pieza única", "Colección exclusiva"),
+        material = "Poliéster 100%",
+        sku = "HOLO-JR-013"
+    ),
+    ProductDetail(
+        id = "2f307c71-4230-11f1-a0bc-18c04d629171",
+        title = "Bison Denim Holo",
+        subtitle = "Denim premium edición limitada",
+        category = "Denim",
+        imageRes = R.drawable.bison_denim_holo,
+        status = "Exclusivo",
+        price = "89.99€",
+        originalPrice = "109.99€",
+        brand = "Holo Crew",
+        description = "Denim premium de edición limitada con acabados exclusivos de la colección HoloCrew.",
+        rating = 4.7f,
+        reviewCount = 342,
+        sizes = listOf("28", "30", "32", "34", "36"),
+        colors = listOf(ColorOption("Azul", "#2196F3"), ColorOption("Negro", "#000000")),
+        features = listOf("Denim premium", "Edición limitada", "Corte slim", "Acabados exclusivos"),
+        material = "Algodón 100%",
+        sku = "HOLO-DN-014"
+    ),
+    ProductDetail(
+        id = "2f307f91-4230-11f1-a0bc-18c04d629171",
+        title = "Vaquero Grafiti Black",
+        subtitle = "Denim grafiti exclusivo",
+        category = "Denim",
+        imageRes = R.drawable.vaquero_grafiti_black,
+        status = "Nuevo",
+        price = "99.99€",
+        originalPrice = "119.99€",
+        brand = "Holo Crew",
+        description = "Vaqueros con estampado grafiti en negro. Fusión perfecta entre denim y arte urbano.",
+        rating = 4.5f,
+        reviewCount = 78,
+        sizes = listOf("28", "30", "32", "34", "36"),
+        colors = listOf(ColorOption("Negro", "#000000")),
+        features = listOf("Estampado grafiti", "Denim premium", "Arte urbano"),
+        material = "Denim 98%, Elastano 2%",
+        sku = "HOLO-DN-015"
+    ),
+    ProductDetail(
+        id = "2f308284-4230-11f1-a0bc-18c04d629171",
+        title = "Vaquero Grafiti Blue",
+        subtitle = "Denim grafiti azul clásico",
+        category = "Denim",
+        imageRes = R.drawable.vaquero_grafiti_blue,
+        status = "Nuevo",
+        price = "99.99€",
+        brand = "Holo Crew",
+        description = "Vaqueros con estampado grafiti en azul clásico. Edición especial.",
+        rating = 4.3f,
+        reviewCount = 56,
+        sizes = listOf("28", "30", "32", "34", "36"),
+        colors = listOf(ColorOption("Azul", "#2196F3")),
+        features = listOf("Estampado grafiti", "Azul clásico", "Edición especial"),
+        material = "Denim 98%, Elastano 2%",
+        sku = "HOLO-DN-016"
+    ),
+    ProductDetail(
+        id = "2f30867c-4230-11f1-a0bc-18c04d629171",
+        title = "New Denims",
+        subtitle = "Denim nueva colección",
         category = "Denim",
         imageRes = R.drawable.newdenims,
-        status = "Premium",
-        price = "$189.99",
-        originalPrice = "$219.99",
+        status = "Nuevo",
+        price = "79.99€",
+        originalPrice = "99.99€",
         brand = "Holo Crew",
-        description = "Chaqueta denim premium con lavado vintage y detalles exclusivos de la marca.",
+        description = "Nueva colección de denim HoloCrew. Corte moderno y acabado premium.",
         rating = 4.5f,
         reviewCount = 178,
-        sizes = listOf("S", "M", "L", "XL"),
-        colors = listOf(
-            ColorOption("Azul claro", "#64B5F6"),
-            ColorOption("Azul oscuro", "#1565C0")
-        ),
-        features = listOf("Lavado vintage", "Botones metálicos", "Forro interior", "Bolsillos laterales"),
-        material = "Denim 100% algodón",
-        careInstructions = "Lavar del revés con agua fría. No usar secadora.",
-        sku = "HOLO-DJ-008",
-        publishedDate = "3 de octubre de 2025"
+        sizes = listOf("28", "30", "32", "34", "36"),
+        colors = listOf(ColorOption("Azul claro", "#64B5F6"), ColorOption("Azul oscuro", "#1565C0")),
+        features = listOf("Corte moderno", "Acabado premium", "Nueva colección"),
+        material = "Algodón 100%",
+        sku = "HOLO-DN-017"
+    ),
+    ProductDetail(
+        id = "2f3089b3-4230-11f1-a0bc-18c04d629171",
+        title = "Shoulder Bag Black Leather",
+        subtitle = "Bag Holo BlackLeather",
+        category = "Accesorios",
+        imageRes = R.drawable.shoulder_bag_holo_blackleather,
+        status = "Exclusivo",
+        price = "249.99€",
+        brand = "Holo Crew",
+        description = "Bolso de hombro en piel negra con detalles metálicos de la colección HoloCrew.",
+        rating = 4.8f,
+        reviewCount = 67,
+        sizes = listOf("Único"),
+        colors = listOf(ColorOption("Negro", "#000000")),
+        features = listOf("Piel genuina", "Detalles metálicos", "Compartimentos internos", "Correa ajustable"),
+        material = "Piel genuina, herrajes metálicos",
+        sku = "HOLO-BG-018"
+    ),
+    ProductDetail(
+        id = "2f308ca4-4230-11f1-a0bc-18c04d629171",
+        title = "Offroad Racing Cap",
+        subtitle = "Exclusive cap - Solo 500 unidades",
+        category = "Accesorios",
+        imageRes = R.drawable.offroad_racing_cap,
+        status = "Limitado",
+        price = "299.99€",
+        brand = "Holo Crew",
+        description = "Gorra exclusiva de la línea Racing, edición limitada a 500 unidades numeradas.",
+        rating = 4.9f,
+        reviewCount = 45,
+        sizes = listOf("S/M", "L/XL"),
+        colors = listOf(ColorOption("Negro", "#000000"), ColorOption("Rojo", "#F44336")),
+        features = listOf("Edición limitada 500 uds", "Numerada", "Bordado premium", "Cierre ajustable"),
+        material = "Algodón canvas, Bordado premium",
+        sku = "HOLO-CP-019"
+    ),
+    ProductDetail(
+        id = "2f308f7e-4230-11f1-a0bc-18c04d629171",
+        title = "Cap Holo Polar",
+        subtitle = "Gorra polar invierno",
+        category = "Accesorios",
+        imageRes = R.drawable.cap_holo_polar,
+        status = "Básico",
+        price = "59.99€",
+        brand = "Holo Crew",
+        description = "Gorra polar de la colección HoloCrew. Perfecta para el invierno.",
+        rating = 4.1f,
+        reviewCount = 120,
+        sizes = listOf("Único"),
+        colors = listOf(ColorOption("Negro", "#000000")),
+        features = listOf("Polar cálido", "Perfecta para invierno", "Logo bordado"),
+        material = "Lana polar 100%",
+        sku = "HOLO-CP-020"
+    ),
+    ProductDetail(
+        id = "2f309251-4230-11f1-a0bc-18c04d629171",
+        title = "Western Holo Cap",
+        subtitle = "Gorra estilo western",
+        category = "Accesorios",
+        imageRes = R.drawable.western_holo_cap,
+        status = "Nuevo",
+        price = "69.99€",
+        originalPrice = "79.99€",
+        brand = "Holo Crew",
+        description = "Gorra estilo western con el logo HoloCrew bordado. Diseño único.",
+        rating = 4.3f,
+        reviewCount = 89,
+        sizes = listOf("Único"),
+        colors = listOf(ColorOption("Negro", "#000000")),
+        features = listOf("Estilo western", "Logo bordado", "Diseño único"),
+        material = "Algodón 100%",
+        sku = "HOLO-CP-021"
     )
 )
