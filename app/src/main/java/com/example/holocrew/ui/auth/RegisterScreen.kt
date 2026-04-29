@@ -127,8 +127,8 @@ fun RegisterScreen(navController: NavController) {
                 painter = painterResource(id = R.drawable.logito),
                 contentDescription = "Logo HoloCrew",
                 modifier = Modifier
-                    .height(40.dp)
-                    .width(120.dp),
+                    .height(80.dp)
+                    .width(200.dp),
                 contentScale = ContentScale.Fit
             )
 
@@ -162,7 +162,8 @@ fun RegisterScreen(navController: NavController) {
                 text = "Crear cuenta",
                 style = HoloType.HeadlineLarge,
                 color = HoloColors.TextPrimary,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.height(HoloSpacing.xxs))
@@ -171,7 +172,8 @@ fun RegisterScreen(navController: NavController) {
                 text = "Únete a la comunidad HoloCrew",
                 style = HoloType.BodyMedium,
                 color = HoloColors.TextSecondary,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.height(HoloSpacing.xl))

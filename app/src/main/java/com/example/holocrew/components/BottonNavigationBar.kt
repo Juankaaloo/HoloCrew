@@ -51,6 +51,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.holocrew.data.CartManager
 import com.example.holocrew.navigation.Screen
+import androidx.compose.material.icons.filled.GridView
 
 /**
  * Barra de navegación inferior con diseño de píldora flotante.
@@ -74,7 +75,7 @@ fun BottomNavigationBar(
     // Definir los items de navegación (izquierda y derecha del carrito)
     val leftItems = listOf(
         NavItem(screen = Screen.Home, icon = Icons.Filled.Home, label = "Home"),
-        NavItem(screen = Screen.Available, icon = Icons.Filled.Search, label = "Explore")
+        NavItem(screen = Screen.Available, icon = Icons.Filled.GridView, label = "Explore")
     )
     val rightItems = listOf(
         NavItem(screen = Screen.Upcoming, icon = Icons.Filled.Bolt, label = "Drops"),

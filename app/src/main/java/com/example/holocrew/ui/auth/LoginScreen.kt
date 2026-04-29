@@ -104,8 +104,8 @@ fun LoginScreen(navController: NavController) {
                 painter = painterResource(id = R.drawable.logito),
                 contentDescription = "Logo HoloCrew",
                 modifier = Modifier
-                    .height(50.dp)
-                    .width(140.dp),
+                    .height(80.dp)
+                    .width(200.dp),
                 contentScale = ContentScale.Fit
             )
 
@@ -139,7 +139,8 @@ fun LoginScreen(navController: NavController) {
                 text = "Iniciar sesión",
                 style = HoloType.HeadlineLarge,
                 color = HoloColors.TextPrimary,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.height(HoloSpacing.xxs))
@@ -148,7 +149,8 @@ fun LoginScreen(navController: NavController) {
                 text = "Accede a tu cuenta HoloCrew",
                 style = HoloType.BodyMedium,
                 color = HoloColors.TextSecondary,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
             )
 
             Spacer(Modifier.height(HoloSpacing.xxl))

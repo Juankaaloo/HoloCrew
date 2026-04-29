@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.holocrew.R
 import com.example.holocrew.data.FavoritesManager
+import com.example.holocrew.theme.HoloColors
 
 /**
  * Barra superior personalizada con logo, favoritos y búsqueda.
@@ -67,8 +68,8 @@ fun CustomTopAppBar(
                     painter = painterResource(id = R.drawable.logito),
                     contentDescription = "Logo HoloCrew",
                     modifier = Modifier
-                        .height(40.dp)
-                        .width(110.dp),
+                        .height(55.dp)
+                        .width(150.dp),
                     contentScale = ContentScale.Fit
                 )
             }
@@ -80,7 +81,7 @@ fun CustomTopAppBar(
                     Icon(
                         imageVector = Icons.Filled.FavoriteBorder,
                         contentDescription = "Mis Favoritos",
-                        tint = Color.Black,
+                        tint = HoloColors.Ink,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -93,7 +94,7 @@ fun CustomTopAppBar(
                             .offset(x = (-4).dp, y = 6.dp)
                             .size(18.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFE53935)),
+                            .background(HoloColors.Pulse),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -116,6 +117,6 @@ fun CustomTopAppBar(
                 )
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = HoloColors.Paper)
     )
 }
