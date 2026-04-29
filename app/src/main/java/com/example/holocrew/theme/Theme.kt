@@ -1,88 +1,64 @@
-/**
- * Theme.kt
- *
- * Configuración del tema Material 3 para la aplicación HoloCrew.
- * Define los esquemas de color para modo claro y oscuro, aplicando
- * la identidad visual de la marca (negro, blanco, dorado).
- *
- * El tema se aplica globalmente desde MainActivity y todos los composables
- * heredan automáticamente estos colores a través de MaterialTheme.
- *
- * Configuración actual:
- *  - Modo claro: fondo blanco, elementos negros, acento dorado
- *  - Modo oscuro: fondo negro, elementos blancos, acento dorado
- *  - Color dinámico (Android 12+): DESACTIVADO para mantener la identidad de marca
- */
 package com.example.holocrew.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * Esquema de colores para modo oscuro.
- * Fondo negro con elementos claros y acento dorado.
+ * HoloCrew Design System — Theme
+ *
+ * Solo light mode por ahora (vibe SNKRS es light por defecto).
+ * Cuando quieras añadir dark mode, duplica HoloLightColorScheme y ajusta.
  */
-private val DarkColorScheme = darkColorScheme(
-    primary = HoloWhite,             // Elementos principales en blanco
-    onPrimary = HoloBlack,           // Texto sobre elementos principales en negro
-    secondary = HoloGold,            // Acento dorado para elementos secundarios
-    onSecondary = HoloBlack,         // Texto sobre elementos secundarios
-    tertiary = HoloGold,             // Terciario también dorado (coherencia)
-    background = HoloBlack,          // Fondo negro
-    onBackground = HoloWhite,        // Texto sobre fondo en blanco
-    surface = HoloDarkGray,          // Superficies (cards) en gris oscuro
-    onSurface = HoloWhite,           // Texto sobre superficies en blanco
-    surfaceVariant = HoloCharcoal,   // Variante de superficie
-    onSurfaceVariant = HoloTextTertiary  // Texto terciario sobre variante
+
+private val HoloLightColorScheme = lightColorScheme(
+    primary = HoloColors.Ink,
+    onPrimary = HoloColors.Paper,
+    secondary = HoloColors.Pulse,
+    onSecondary = HoloColors.Paper,
+    tertiary = HoloColors.Neutral500,
+    onTertiary = HoloColors.Paper,
+    background = HoloColors.Paper,
+    onBackground = HoloColors.Ink,
+    surface = HoloColors.Paper,
+    onSurface = HoloColors.Ink,
+    surfaceVariant = HoloColors.Fog,
+    onSurfaceVariant = HoloColors.Neutral500,
+    error = HoloColors.Pulse,
+    onError = HoloColors.Paper,
+    outline = HoloColors.Neutral300,
+    outlineVariant = HoloColors.Neutral200
 )
 
 /**
- * Esquema de colores para modo claro (el principal de la app).
- * Fondo blanco con elementos negros y acento dorado.
+ * CompositionLocal para acceder al spacing desde cualquier Composable
+ * sin tener que importar HoloSpacing en cada archivo.
+ *
+ * Uso: val spacing = HoloTheme.spacing
  */
-private val LightColorScheme = lightColorScheme(
-    primary = HoloBlack,             // Elementos principales en negro
-    onPrimary = HoloWhite,           // Texto sobre elementos principales en blanco
-    secondary = HoloGold,            // Acento dorado para elementos secundarios
-    onSecondary = HoloBlack,         // Texto sobre elementos secundarios
-    tertiary = HoloGold,             // Terciario dorado
-    background = HoloBackground,     // Fondo gris muy claro
-    onBackground = HoloBlack,        // Texto sobre fondo en negro
-    surface = HoloWhite,             // Superficies (cards) en blanco
-    onSurface = HoloBlack,           // Texto sobre superficies en negro
-    surfaceVariant = HoloLightGray,  // Variante de superficie (inputs, filtros)
-    onSurfaceVariant = HoloTextSecondary  // Texto secundario sobre variante
-)
+val LocalHoloSpacing = staticCompositionLocalOf { HoloSpacing }
 
-/**
- * Tema principal de la aplicación HoloCrew.
- *
- * Aplica el esquema de color según el modo del sistema (claro/oscuro)
- * y la tipografía personalizada definida en Type.kt.
- *
- * NOTA: El color dinámico de Android 12+ está DESACTIVADO intencionalmente
- * para que la app siempre muestre los colores de la marca HoloCrew,
- * independientemente del wallpaper del usuario.
- *
- * @param darkTheme Si se debe usar el tema oscuro (por defecto sigue al sistema)
- * @param content Contenido composable al que se aplica el tema
- */
+object HoloTheme {
+    val spacing: HoloSpacing
+        @Composable get() = LocalHoloSpacing.current
+
+    val type: HoloType = HoloType
+    val colors: HoloColors = HoloColors
+}
+
 @Composable
 fun HoloCrewTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    // Seleccionar el esquema de color según el modo del sistema
-    // No se usa color dinámico para mantener la identidad de marca
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalHoloSpacing provides HoloSpacing
+    ) {
+        MaterialTheme(
+            colorScheme = HoloLightColorScheme,
+            typography = HoloTypography,
+            content = content
+        )
+    }
 }

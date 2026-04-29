@@ -1,19 +1,3 @@
-/**
- * Type.kt
- *
- * Configuración tipográfica de la aplicación HoloCrew.
- * Define los estilos de texto que se usan globalmente a través de MaterialTheme.
- *
- * La tipografía sigue un estilo streetwear moderno y limpio:
- *  - Títulos: peso Bold, tracking ajustado para impacto visual
- *  - Cuerpo: peso Normal, legible y limpio
- *  - Labels: peso Medium, compactos para badges y botones
- *
- * Se usa FontFamily.Default (Sans-serif del sistema) que en Android
- * corresponde a Roboto, una fuente limpia y moderna.
- * En una versión futura se podría importar una fuente custom como
- * Montserrat, Oswald o Bebas Neue para más personalidad.
- */
 package com.example.holocrew.theme
 
 import androidx.compose.material3.Typography
@@ -23,139 +7,184 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
- * Tipografía global de la app.
- * Material 3 define varios "roles" tipográficos (display, headline, title,
- * body, label) que se usan automáticamente en componentes de Material.
+ * HoloCrew Design System — Typography
+ *
+ * Versión SIN fuentes custom — usa la fuente del sistema (Roboto en Android).
+ * Cuando quieras añadir fuentes custom (Space Grotesk, Inter, etc.), solo
+ * tienes que cambiar las constantes DisplayFamily / TextFamily / MonoFamily
+ * por FontFamily(Font(R.font.xxx)).
+ *
+ * La jerarquía y los tamaños se mantienen idénticos al sistema completo.
  */
-val Typography = Typography(
 
-    // ── Display: textos muy grandes (banners, hero sections) ──
+// ── FAMILIAS (todas usan la del sistema por ahora) ────────────────────────────
+private val DisplayFamily = FontFamily.Default   // Para display y headlines
+private val TextFamily = FontFamily.Default      // Para body, labels, todo
+private val MonoFamily = FontFamily.Monospace    // Para precios, números, códigos
 
-    displayLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Black,       // Peso máximo para impacto
-        fontSize = 36.sp,
-        lineHeight = 40.sp,
-        letterSpacing = (-1).sp              // Tracking negativo para compactez
-    ),
+/**
+ * Estilos custom de HoloCrew. Úsalos directamente en lugar de Typography.x
+ * para tener nombres semánticos claros.
+ */
+object HoloType {
 
-    displayMedium = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Bold,
-        fontSize = 30.sp,
+    // ── DISPLAY (hero, títulos enormes en banners y splash) ───────────────────
+    val DisplayHuge = TextStyle(
+        fontFamily = DisplayFamily,
+        fontWeight = FontWeight.Black,
+        fontSize = 56.sp,
+        lineHeight = 60.sp,
+        letterSpacing = (-1.5).sp
+    )
+
+    val DisplayLarge = TextStyle(
+        fontFamily = DisplayFamily,
+        fontWeight = FontWeight.Black,
+        fontSize = 40.sp,
+        lineHeight = 44.sp,
+        letterSpacing = (-1).sp
+    )
+
+    val DisplayMedium = TextStyle(
+        fontFamily = DisplayFamily,
+        fontWeight = FontWeight.Black,
+        fontSize = 32.sp,
         lineHeight = 36.sp,
         letterSpacing = (-0.5).sp
-    ),
+    )
 
-    displaySmall = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
-        letterSpacing = 0.sp
-    ),
-
-    // ── Headline: títulos de sección ──
-
-    headlineLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Bold,
+    // ── HEADLINE (títulos de sección, pantalla) ───────────────────────────────
+    val HeadlineLarge = TextStyle(
+        fontFamily = TextFamily,
+        fontWeight = FontWeight.Black,
         fontSize = 28.sp,
-        lineHeight = 34.sp,
+        lineHeight = 32.sp,
         letterSpacing = (-0.5).sp
-    ),
+    )
 
-    headlineMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+    val HeadlineMedium = TextStyle(
+        fontFamily = TextFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
-    ),
+        lineHeight = 28.sp
+    )
 
-    headlineSmall = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.SemiBold,
+    val HeadlineSmall = TextStyle(
+        fontFamily = TextFamily,
+        fontWeight = FontWeight.Bold,
         fontSize = 18.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.sp
-    ),
+        lineHeight = 24.sp
+    )
 
-    // ── Title: títulos de componentes (cards, dialogs) ──
-
-    titleLarge = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Bold,
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
-        letterSpacing = 0.sp
-    ),
-
-    titleMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+    // ── TITLE (títulos de cards, productos) ───────────────────────────────────
+    val TitleLarge = TextStyle(
+        fontFamily = TextFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
-        lineHeight = 22.sp,
-        letterSpacing = 0.15.sp
-    ),
+        lineHeight = 22.sp
+    )
 
-    titleSmall = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
+    val TitleMedium = TextStyle(
+        fontFamily = TextFamily,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
-    ),
+        lineHeight = 20.sp
+    )
 
-    // ── Body: texto de contenido (descripciones, párrafos) ──
+    val TitleSmall = TextStyle(
+        fontFamily = TextFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 13.sp,
+        lineHeight = 18.sp
+    )
 
-    bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+    // ── BODY (descripciones, texto largo) ─────────────────────────────────────
+    val BodyLarge = TextStyle(
+        fontFamily = TextFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
+        lineHeight = 24.sp
+    )
 
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+    val BodyMedium = TextStyle(
+        fontFamily = TextFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
-    ),
+        lineHeight = 20.sp
+    )
 
-    bodySmall = TextStyle(
-        fontFamily = FontFamily.Default,
+    val BodySmall = TextStyle(
+        fontFamily = TextFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
-    ),
+        lineHeight = 16.sp
+    )
 
-    // ── Label: textos pequeños (badges, botones, chips) ──
-
-    labelLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+    // ── LABEL (botones, chips, badges, headers) ───────────────────────────────
+    // Siempre uppercase en uso, letter-spacing alto. Estilo SNKRS.
+    val LabelLarge = TextStyle(
+        fontFamily = TextFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
-    ),
+        lineHeight = 18.sp,
+        letterSpacing = 1.5.sp
+    )
 
-    labelMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+    val LabelMedium = TextStyle(
+        fontFamily = TextFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 12.sp,
         lineHeight = 16.sp,
-        letterSpacing = 0.5.sp                // Más tracking para legibilidad a tamaño pequeño
-    ),
+        letterSpacing = 1.5.sp
+    )
 
-    labelSmall = TextStyle(
-        fontFamily = FontFamily.Default,
+    val LabelSmall = TextStyle(
+        fontFamily = TextFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 10.sp,
         lineHeight = 14.sp,
+        letterSpacing = 2.sp
+    )
+
+    // ── MONO (precios, números de pedido, contadores, tracking) ───────────────
+    val MonoLarge = TextStyle(
+        fontFamily = MonoFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 24.sp,
+        lineHeight = 28.sp
+    )
+
+    val MonoMedium = TextStyle(
+        fontFamily = MonoFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        lineHeight = 20.sp
+    )
+
+    val MonoSmall = TextStyle(
+        fontFamily = MonoFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
         letterSpacing = 0.5.sp
     )
+}
+
+// Material 3 Typography mapping (para el MaterialTheme)
+val HoloTypography = Typography(
+    displayLarge = HoloType.DisplayLarge,
+    displayMedium = HoloType.DisplayMedium,
+    displaySmall = HoloType.HeadlineLarge,
+    headlineLarge = HoloType.HeadlineLarge,
+    headlineMedium = HoloType.HeadlineMedium,
+    headlineSmall = HoloType.HeadlineSmall,
+    titleLarge = HoloType.TitleLarge,
+    titleMedium = HoloType.TitleMedium,
+    titleSmall = HoloType.TitleSmall,
+    bodyLarge = HoloType.BodyLarge,
+    bodyMedium = HoloType.BodyMedium,
+    bodySmall = HoloType.BodySmall,
+    labelLarge = HoloType.LabelLarge,
+    labelMedium = HoloType.LabelMedium,
+    labelSmall = HoloType.LabelSmall
 )

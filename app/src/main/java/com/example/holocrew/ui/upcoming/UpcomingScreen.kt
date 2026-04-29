@@ -1,32 +1,24 @@
 /**
  * UpcomingScreen.kt
  *
- * Pantalla de próximos lanzamientos en HoloCrew.
- * Diseño mejorado con:
- *  - Primer drop como hero card a pantalla completa con gradiente
- *  - Filtros por estado (Todos, Próximamente, Reserva, Pre-orden)
- *  - Cards SNKRS claras (fondo gris) con subtítulo, título, imagen y Notifícame
- *  - Cards oscuras con gradiente intercaladas
- *  - Más productos mock y datos
- *  - Fecha de lanzamiento y precio visibles
+ * Pantalla de próximos lanzamientos / drops en HoloCrew.
+ *
+ * Diseño SNKRS con:
+ *  - Header con título + contador de lanzamientos
+ *  - Filtros por estado (chips negro/gris)
+ *  - Hero card: primer drop a pantalla completa con gradiente + CTA
+ *  - Cards alternas: claras (fondo Fog) y oscuras (imagen + gradiente)
+ *  - Botón "Notifícame" en cada card
+ *  - Labels rojos (Pulse) para acentos + badges de estado colorizados
+ *
+ * Los productos son datos mock locales (no vienen de la API).
  */
 package com.example.holocrew.ui.upcoming
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -36,80 +28,73 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.holocrew.R
 import com.example.holocrew.components.BottomNavigationBar
 import com.example.holocrew.components.CustomTopAppBar
+import com.example.holocrew.theme.HoloColors
+import com.example.holocrew.theme.HoloSpacing
+import com.example.holocrew.theme.HoloType
 
 // ══════════════════════════════════════════════════════════════════════════════
-// MODELO DE DATOS
+// MODELO — Producto próximo (datos mock, no viene de la API)
 // ══════════════════════════════════════════════════════════════════════════════
-
 data class UpcomingProduct(
     val id: Int,
     val title: String,
     val subtitle: String,
     val launchDate: String,
-    val imageRes: Int,
-    val status: String,
+    val imageRes: Int,       // Drawable local
+    val status: String,      // "Próximamente", "Reserva Abierta", "Pre-orden"
     val price: String? = null
 )
 
-// ══════════════════════════════════════════════════════════════════════════════
-// PANTALLA
-// ══════════════════════════════════════════════════════════════════════════════
-
+/**
+ * UpcomingScreen — Pantalla de próximos drops.
+ *
+ * @param navController Controlador de navegación.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpcomingScreen(navController: NavController) {
 
+    // ── Filtro seleccionado ───────────────────────────────────────────────────
     var selectedFilter by remember { mutableStateOf("Todos") }
 
+    // ── Datos mock de próximos lanzamientos ───────────────────────────────────
     val allProducts = remember {
         listOf(
-            UpcomingProduct(1, "Winter Collection 2025", "Colección completa de invierno", "25 Dic 2025", R.drawable.outerwear, "Próximamente", "$299.99"),
-            UpcomingProduct(2, "Limited Edition Denim", "Jeans numerados · Solo 100 unidades", "15 Ene 2026", R.drawable.newdenims, "Reserva Abierta", "$199.99"),
-            UpcomingProduct(3, "HOLOCREW x Artist Collab", "Colaboración exclusiva con artista urbano", "30 Ene 2026", R.drawable.tops, "Próximamente", "$249.99"),
-            UpcomingProduct(4, "Techwear Collection", "Ropa técnica para clima extremo", "10 Feb 2026", R.drawable.outerwear, "Pre-orden", "$349.99"),
-            UpcomingProduct(5, "Summer Essentials Pack", "Pack verano con 3 piezas básicas", "1 Mar 2026", R.drawable.glory_holo_polo, "Próximamente", "$159.99"),
-            UpcomingProduct(6, "HoloCrew x Racing", "Colección motorsport edición especial", "15 Mar 2026", R.drawable.offroad_racing_cap, "Próximamente", "$279.99")
+            UpcomingProduct(1, "Winter Collection 2025", "Colección completa de invierno", "25 Dic 2025", R.drawable.outerwear, "Próximamente", "299.99€"),
+            UpcomingProduct(2, "Limited Edition Denim", "Jeans numerados · Solo 100 unidades", "15 Ene 2026", R.drawable.newdenims, "Reserva Abierta", "199.99€"),
+            UpcomingProduct(3, "HOLOCREW x Artist Collab", "Colaboración exclusiva con artista urbano", "30 Ene 2026", R.drawable.tops, "Próximamente", "249.99€"),
+            UpcomingProduct(4, "Techwear Collection", "Ropa técnica para clima extremo", "10 Feb 2026", R.drawable.outerwear, "Pre-orden", "349.99€"),
+            UpcomingProduct(5, "Summer Essentials Pack", "Pack verano con 3 piezas básicas", "1 Mar 2026", R.drawable.glory_holo_polo, "Próximamente", "159.99€"),
+            UpcomingProduct(6, "HoloCrew x Racing", "Colección motorsport edición especial", "15 Mar 2026", R.drawable.offroad_racing_cap, "Próximamente", "279.99€")
         )
     }
 
     val filters = listOf("Todos", "Próximamente", "Reserva Abierta", "Pre-orden")
 
+    // Filtrar productos según el chip seleccionado
     val filteredProducts = remember(selectedFilter) {
         if (selectedFilter == "Todos") allProducts
         else allProducts.filter { it.status == selectedFilter }
     }
 
+    // El primer producto se muestra como hero, el resto como cards alternas
     val heroProduct = filteredProducts.firstOrNull()
     val restProducts = if (filteredProducts.size > 1) filteredProducts.drop(1) else emptyList()
 
+    // ── Scaffold con topBar + bottomNav ───────────────────────────────────────
     Scaffold(
         topBar = {
             CustomTopAppBar(
@@ -118,27 +103,42 @@ fun UpcomingScreen(navController: NavController) {
             )
         },
         bottomBar = { BottomNavigationBar(navController = navController) },
-        containerColor = Color.White
+        containerColor = HoloColors.Paper
     ) { paddingValues ->
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(paddingValues),
-            contentPadding = PaddingValues(bottom = 80.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentPadding = PaddingValues(bottom = HoloSpacing.BottomNavHeight)
         ) {
 
-            // ═══ HEADER ═══
+            // ══════════════════════════════════════════════════════════════════
+            // HEADER — título + contador + filtros
+            // ══════════════════════════════════════════════════════════════════
             item {
-                Column(Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
-                    Text("Próximos Drops", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+                Column(
+                    modifier = Modifier.padding(
+                        horizontal = HoloSpacing.md,
+                        vertical = HoloSpacing.md
+                    )
+                ) {
                     Text(
-                        "${filteredProducts.size} lanzamientos programados",
-                        fontSize = 14.sp, color = Color(0xFF9E9E9E), modifier = Modifier.padding(top = 4.dp)
+                        text = "Próximos Drops",
+                        style = HoloType.HeadlineLarge,
+                        color = HoloColors.TextPrimary
+                    )
+                    Text(
+                        text = "${filteredProducts.size} lanzamientos programados",
+                        style = HoloType.BodyMedium,
+                        color = HoloColors.TextTertiary,
+                        modifier = Modifier.padding(top = HoloSpacing.xxs)
                     )
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(HoloSpacing.md))
 
-                    // ═══ FILTROS POR ESTADO ═══
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Chips de filtro por estado
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(HoloSpacing.xs)) {
                         items(filters) { filter ->
                             StatusFilterChip(
                                 text = filter,
@@ -150,34 +150,52 @@ fun UpcomingScreen(navController: NavController) {
                 }
             }
 
-            // ═══ ESTADO VACÍO ═══
+            // ══════════════════════════════════════════════════════════════════
+            // ESTADO VACÍO — cuando no hay drops para el filtro
+            // ══════════════════════════════════════════════════════════════════
             if (filteredProducts.isEmpty()) {
                 item {
-                    Column(Modifier.fillMaxWidth().padding(48.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("No hay drops para este filtro", fontSize = 16.sp, color = Color(0xFF666666))
-                        Text("Intenta con otro estado", fontSize = 14.sp, color = Color(0xFF9E9E9E), modifier = Modifier.padding(top = 4.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(HoloSpacing.xxxl),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "No hay drops para este filtro",
+                            style = HoloType.TitleLarge,
+                            color = HoloColors.TextSecondary
+                        )
+                        Text(
+                            text = "Intenta con otro estado",
+                            style = HoloType.BodyMedium,
+                            color = HoloColors.TextTertiary,
+                            modifier = Modifier.padding(top = HoloSpacing.xxs)
+                        )
                     }
                 }
             }
 
-            // ═══ HERO CARD (primer drop, grande con gradiente) ═══
+            // ══════════════════════════════════════════════════════════════════
+            // HERO CARD — primer drop, card grande con gradiente
+            // ══════════════════════════════════════════════════════════════════
             if (heroProduct != null) {
                 item {
                     HeroDropCard(product = heroProduct)
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(HoloSpacing.md))
                 }
             }
 
-            // ═══ RESTO DE CARDS (alternan entre estilo claro y oscuro) ═══
+            // ══════════════════════════════════════════════════════════════════
+            // RESTO — cards alternas (clara / oscura)
+            // ══════════════════════════════════════════════════════════════════
             itemsIndexed(restProducts) { index, product ->
                 if (index % 2 == 0) {
-                    // Card clara estilo SNKRS (fondo gris, subtítulo + título + imagen + Notifícame)
-                    LightDropCard(product = product)
+                    LightDropCard(product = product)    // Fondo gris Fog
                 } else {
-                    // Card oscura con gradiente
-                    DarkDropCard(product = product)
+                    DarkDropCard(product = product)     // Imagen + gradiente negro
                 }
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(HoloSpacing.md))
             }
         }
     }
@@ -187,22 +205,32 @@ fun UpcomingScreen(navController: NavController) {
 // COMPONENTES
 // ══════════════════════════════════════════════════════════════════════════════
 
-/** Chip de filtro por estado */
+/**
+ * StatusFilterChip — Chip de filtro por estado de drop.
+ * Negro si seleccionado, gris Fog si no.
+ */
 @Composable
 fun StatusFilterChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(50))
-            .background(if (isSelected) Color.Black else Color(0xFFF0F0F0))
+            .clip(RoundedCornerShape(HoloSpacing.RadiusPill))
+            .background(if (isSelected) HoloColors.Ink else HoloColors.Fog)
             .clickable { onClick() }
-            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .padding(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)
     ) {
-        Text(text, fontSize = 14.sp, color = if (isSelected) Color.White else Color(0xFF666666), fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium)
+        Text(
+            text = text,
+            style = if (isSelected) HoloType.TitleMedium else HoloType.BodyMedium,
+            color = if (isSelected) HoloColors.Paper else HoloColors.TextSecondary
+        )
     }
 }
 
 /**
- * Hero Card — Primer drop, card grande con imagen, gradiente y toda la info.
+ * HeroDropCard — Card hero para el primer drop.
+ *
+ * Imagen fullwidth 420dp con gradiente negro, badge de estado,
+ * info superpuesta (subtítulo, título, fecha, precio) y botones.
  */
 @Composable
 fun HeroDropCard(product: UpcomingProduct) {
@@ -210,10 +238,10 @@ fun HeroDropCard(product: UpcomingProduct) {
         modifier = Modifier
             .fillMaxWidth()
             .height(420.dp)
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .padding(horizontal = HoloSpacing.md)
+            .clip(RoundedCornerShape(HoloSpacing.RadiusLg))
     ) {
-        // Imagen
+        // Imagen de fondo
         Image(
             painter = painterResource(id = product.imageRes),
             contentDescription = product.title,
@@ -221,55 +249,115 @@ fun HeroDropCard(product: UpcomingProduct) {
             contentScale = ContentScale.Crop
         )
 
-        // Gradiente
+        // Gradiente negro desde abajo
         Box(
-            modifier = Modifier.fillMaxWidth().height(250.dp).align(Alignment.BottomCenter)
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))))
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(HoloColors.Ink.copy(alpha = 0f), HoloColors.InkOverlay80)
+                    )
+                )
         )
 
-        // Badge estado
+        // Badge de estado (arriba-izquierda)
         Box(
-            modifier = Modifier.padding(14.dp).align(Alignment.TopStart)
-                .clip(RoundedCornerShape(8.dp))
+            modifier = Modifier
+                .padding(HoloSpacing.sm)
+                .align(Alignment.TopStart)
+                .clip(RoundedCornerShape(HoloSpacing.RadiusSm))
                 .background(statusColor(product.status))
-                .padding(horizontal = 12.dp, vertical = 6.dp)
+                .padding(horizontal = HoloSpacing.sm, vertical = HoloSpacing.xxs)
         ) {
-            Text(product.status.uppercase(), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+            Text(
+                text = product.status.uppercase(),
+                style = HoloType.LabelSmall,
+                color = HoloColors.Paper
+            )
         }
 
-        // Info
-        Column(Modifier.align(Alignment.BottomStart).padding(20.dp)) {
-            Text(product.subtitle, fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f))
-            Spacer(Modifier.height(4.dp))
-            Text(product.title, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color.White, lineHeight = 28.sp)
-            Spacer(Modifier.height(10.dp))
+        // Info superpuesta abajo
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(HoloSpacing.lg)
+        ) {
+            Text(
+                text = product.subtitle,
+                style = HoloType.BodySmall,
+                color = HoloColors.TextOnDarkMuted
+            )
+            Spacer(Modifier.height(HoloSpacing.xxs))
+            Text(
+                text = product.title,
+                style = HoloType.HeadlineLarge,
+                color = HoloColors.TextOnDark
+            )
+            Spacer(Modifier.height(HoloSpacing.xs))
 
-            // Fecha + Precio
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            // Fecha + precio
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.DateRange, null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(product.launchDate, fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+                    Icon(
+                        imageVector = Icons.Filled.DateRange,
+                        contentDescription = null,
+                        tint = HoloColors.TextOnDarkMuted,
+                        modifier = Modifier.size(HoloSpacing.IconSizeSmall)
+                    )
+                    Spacer(Modifier.width(HoloSpacing.xxs))
+                    Text(
+                        text = product.launchDate,
+                        style = HoloType.TitleSmall,
+                        color = HoloColors.TextOnDarkMuted
+                    )
                 }
-                Text(product.price ?: "", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(
+                    text = product.price ?: "",
+                    style = HoloType.HeadlineMedium,
+                    color = HoloColors.TextOnDark
+                )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(HoloSpacing.md))
 
-            // Botones
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            // Botones: compartir + Notifícame
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Outlined.Share, "Compartir", tint = Color.White, modifier = Modifier.size(22.dp))
+                    Icon(
+                        imageVector = Icons.Outlined.Share,
+                        contentDescription = "Compartir",
+                        tint = HoloColors.TextOnDark,
+                        modifier = Modifier.size(HoloSpacing.IconSizeDefault)
+                    )
                 }
                 Button(
                     onClick = {},
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp)
+                    shape = RoundedCornerShape(HoloSpacing.RadiusPill),
+                    colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Paper),
+                    contentPadding = PaddingValues(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)
                 ) {
-                    Icon(Icons.Filled.Notifications, null, tint = Color.Black, modifier = Modifier.size(16.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Notifícame", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Black)
+                    Icon(
+                        imageVector = Icons.Filled.Notifications,
+                        contentDescription = null,
+                        tint = HoloColors.Ink,
+                        modifier = Modifier.size(HoloSpacing.IconSizeSmall)
+                    )
+                    Spacer(Modifier.width(HoloSpacing.xxs))
+                    Text(
+                        text = "Notifícame",
+                        style = HoloType.TitleMedium,
+                        color = HoloColors.Ink
+                    )
                 }
             }
         }
@@ -277,73 +365,132 @@ fun HeroDropCard(product: UpcomingProduct) {
 }
 
 /**
- * Card clara estilo SNKRS — fondo gris, subtítulo arriba, título,
+ * LightDropCard — Card clara sobre fondo Fog.
+ *
+ * Subtítulo, título + precio, fecha + badge de estado,
  * imagen centrada, y fila compartir + Notifícame.
  */
 @Composable
 fun LightDropCard(product: UpcomingProduct) {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape = RoundedCornerShape(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = HoloSpacing.md),
+        shape = RoundedCornerShape(HoloSpacing.RadiusLg),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+        colors = CardDefaults.cardColors(containerColor = HoloColors.Fog)
     ) {
-        Column(Modifier.fillMaxWidth().padding(20.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(HoloSpacing.lg)
+        ) {
             // Subtítulo
-            Text(product.subtitle, fontSize = 14.sp, color = Color(0xFF666666))
-            Spacer(Modifier.height(4.dp))
+            Text(
+                text = product.subtitle,
+                style = HoloType.BodyMedium,
+                color = HoloColors.TextSecondary
+            )
+            Spacer(Modifier.height(HoloSpacing.xxs))
 
             // Título + precio
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-                Text(product.title, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Color.Black, lineHeight = 26.sp, modifier = Modifier.weight(1f))
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(product.price ?: "", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.Black)
-                }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = product.title,
+                    style = HoloType.HeadlineMedium,
+                    color = HoloColors.TextPrimary,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = product.price ?: "",
+                    style = HoloType.HeadlineSmall,
+                    color = HoloColors.TextPrimary
+                )
             }
 
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(HoloSpacing.xxs))
 
-            // Fecha + badge
+            // Fecha + badge de estado
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.DateRange, null, tint = Color(0xFF9E9E9E), modifier = Modifier.size(14.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(product.launchDate, fontSize = 13.sp, color = Color(0xFF9E9E9E))
-                Spacer(Modifier.width(10.dp))
+                Icon(
+                    imageVector = Icons.Filled.DateRange,
+                    contentDescription = null,
+                    tint = HoloColors.TextTertiary,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(Modifier.width(HoloSpacing.xxs))
+                Text(
+                    text = product.launchDate,
+                    style = HoloType.BodySmall,
+                    color = HoloColors.TextTertiary
+                )
+                Spacer(Modifier.width(HoloSpacing.xs))
+
+                // Badge de estado con color de fondo semitransparente
                 Box(
-                    modifier = Modifier.clip(RoundedCornerShape(4.dp))
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(HoloSpacing.RadiusXs))
                         .background(statusColor(product.status).copy(alpha = 0.15f))
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                        .padding(horizontal = HoloSpacing.xs, vertical = 3.dp)
                 ) {
-                    Text(product.status, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = statusColor(product.status))
+                    Text(
+                        text = product.status,
+                        style = HoloType.LabelSmall,
+                        color = statusColor(product.status)
+                    )
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(HoloSpacing.md))
 
-            // Imagen centrada
-            Box(Modifier.fillMaxWidth().height(220.dp), contentAlignment = Alignment.Center) {
+            // Imagen del producto centrada
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Image(
                     painter = painterResource(id = product.imageRes),
                     contentDescription = product.title,
-                    modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(12.dp)),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(HoloSpacing.RadiusMd)),
                     contentScale = ContentScale.Fit
                 )
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(HoloSpacing.md))
 
             // Compartir + Notifícame
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(onClick = {}, modifier = Modifier.size(40.dp)) {
-                    Icon(Icons.Outlined.Share, "Compartir", tint = Color.Black, modifier = Modifier.size(22.dp))
+                    Icon(
+                        imageVector = Icons.Outlined.Share,
+                        contentDescription = "Compartir",
+                        tint = HoloColors.Ink,
+                        modifier = Modifier.size(HoloSpacing.IconSizeDefault)
+                    )
                 }
                 Button(
                     onClick = {},
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+                    shape = RoundedCornerShape(HoloSpacing.RadiusPill),
+                    colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Ink),
+                    contentPadding = PaddingValues(horizontal = HoloSpacing.xl, vertical = HoloSpacing.xs)
                 ) {
-                    Text("Notifícame", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                    Text(
+                        text = "NOTIFÍCAME",
+                        style = HoloType.LabelMedium,
+                        color = HoloColors.Paper
+                    )
                 }
             }
         }
@@ -351,7 +498,9 @@ fun LightDropCard(product: UpcomingProduct) {
 }
 
 /**
- * Card oscura — imagen de fondo con gradiente, info superpuesta.
+ * DarkDropCard — Card oscura con imagen de fondo + gradiente.
+ *
+ * Similar a HeroDropCard pero más compacta (340dp).
  */
 @Composable
 fun DarkDropCard(product: UpcomingProduct) {
@@ -359,9 +508,10 @@ fun DarkDropCard(product: UpcomingProduct) {
         modifier = Modifier
             .fillMaxWidth()
             .height(340.dp)
-            .padding(horizontal = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .padding(horizontal = HoloSpacing.md)
+            .clip(RoundedCornerShape(HoloSpacing.RadiusLg))
     ) {
+        // Imagen de fondo
         Image(
             painter = painterResource(id = product.imageRes),
             contentDescription = product.title,
@@ -369,62 +519,128 @@ fun DarkDropCard(product: UpcomingProduct) {
             contentScale = ContentScale.Crop
         )
 
+        // Gradiente negro
         Box(
-            modifier = Modifier.fillMaxWidth().height(200.dp).align(Alignment.BottomCenter)
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))))
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(HoloColors.Ink.copy(alpha = 0f), HoloColors.InkOverlay80)
+                    )
+                )
         )
 
-        // Badge
+        // Badge de estado
         Box(
-            modifier = Modifier.padding(14.dp).align(Alignment.TopStart)
-                .clip(RoundedCornerShape(8.dp)).background(statusColor(product.status))
-                .padding(horizontal = 10.dp, vertical = 5.dp)
+            modifier = Modifier
+                .padding(HoloSpacing.sm)
+                .align(Alignment.TopStart)
+                .clip(RoundedCornerShape(HoloSpacing.RadiusSm))
+                .background(statusColor(product.status))
+                .padding(horizontal = HoloSpacing.xs, vertical = HoloSpacing.xxs)
         ) {
-            Text(product.status.uppercase(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 0.5.sp)
+            Text(
+                text = product.status.uppercase(),
+                style = HoloType.LabelSmall,
+                color = HoloColors.Paper
+            )
         }
 
-        Column(Modifier.align(Alignment.BottomStart).padding(16.dp)) {
-            Text(product.subtitle, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f))
-            Spacer(Modifier.height(4.dp))
-            Text(product.title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White, lineHeight = 24.sp)
-            Spacer(Modifier.height(6.dp))
+        // Info superpuesta
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(HoloSpacing.md)
+        ) {
+            Text(
+                text = product.subtitle,
+                style = HoloType.BodySmall,
+                color = HoloColors.TextOnDarkMuted
+            )
+            Spacer(Modifier.height(HoloSpacing.xxs))
+            Text(
+                text = product.title,
+                style = HoloType.HeadlineMedium,
+                color = HoloColors.TextOnDark
+            )
+            Spacer(Modifier.height(HoloSpacing.xxs))
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            // Fecha + precio
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.DateRange, null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text(product.launchDate, fontSize = 13.sp, color = Color.White.copy(alpha = 0.8f))
+                    Icon(
+                        imageVector = Icons.Filled.DateRange,
+                        contentDescription = null,
+                        tint = HoloColors.TextOnDarkMuted,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(Modifier.width(HoloSpacing.xxs))
+                    Text(
+                        text = product.launchDate,
+                        style = HoloType.BodySmall,
+                        color = HoloColors.TextOnDarkMuted
+                    )
                 }
-                Text(product.price ?: "", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(
+                    text = product.price ?: "",
+                    style = HoloType.HeadlineSmall,
+                    color = HoloColors.TextOnDark
+                )
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(HoloSpacing.sm))
 
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            // Compartir + Notifícame
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(onClick = {}, modifier = Modifier.size(36.dp)) {
-                    Icon(Icons.Outlined.Share, "Compartir", tint = Color.White, modifier = Modifier.size(20.dp))
+                    Icon(
+                        imageVector = Icons.Outlined.Share,
+                        contentDescription = "Compartir",
+                        tint = HoloColors.TextOnDark,
+                        modifier = Modifier.size(HoloSpacing.IconSizeDefault)
+                    )
                 }
                 Button(
                     onClick = {},
-                    shape = RoundedCornerShape(50),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+                    shape = RoundedCornerShape(HoloSpacing.RadiusPill),
+                    colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Paper),
+                    contentPadding = PaddingValues(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)
                 ) {
-                    Icon(Icons.Filled.Notifications, null, tint = Color.Black, modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("Notifícame", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color.Black)
+                    Icon(
+                        imageVector = Icons.Filled.Notifications,
+                        contentDescription = null,
+                        tint = HoloColors.Ink,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(Modifier.width(HoloSpacing.xxs))
+                    Text(
+                        text = "Notifícame",
+                        style = HoloType.TitleSmall,
+                        color = HoloColors.Ink
+                    )
                 }
             }
         }
     }
 }
 
-/** Color según el estado del drop */
-fun statusColor(status: String): Color {
-    return when (status) {
-        "Próximamente" -> Color(0xFFFF9800)
-        "Reserva Abierta" -> Color(0xFF4CAF50)
-        "Pre-orden" -> Color(0xFF2196F3)
-        else -> Color(0xFF607D8B)
-    }
+/**
+ * Color semántico según el estado del drop.
+ * Se usa para badges y pills de estado.
+ */
+fun statusColor(status: String) = when (status) {
+    "Próximamente" -> HoloColors.Warning      // Naranja/amarillo
+    "Reserva Abierta" -> HoloColors.Success   // Verde
+    "Pre-orden" -> HoloColors.Info            // Azul
+    else -> HoloColors.Neutral400             // Gris neutro
 }
