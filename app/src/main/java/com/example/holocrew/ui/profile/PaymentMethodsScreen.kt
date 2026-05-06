@@ -56,18 +56,9 @@ fun PaymentMethodsScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(true) }
     var showAddSheet by remember { mutableStateOf(false) }
 
-    // Función para cargar/recargar métodos de pago desde la API
+    // Función para cargar/recargar métodos de pago
     fun loadMethods() {
-        scope.launch {
-            val token = TokenManager.getTokenOnce(context) ?: return@launch
-            try {
-                val response = RetrofitClient.api.getPaymentMethods("Bearer $token")
-                if (response.isSuccessful && response.body()?.success == true) {
-                    methods = response.body()!!.data ?: emptyList()
-                }
-            } catch (e: Exception) { e.printStackTrace() }
-            isLoading = false
-        }
+        isLoading = false
     }
 
     LaunchedEffect(Unit) { loadMethods() }
@@ -78,20 +69,17 @@ fun PaymentMethodsScreen(navController: NavController) {
             onDismiss = { showAddSheet = false },
             onSave = { request ->
                 scope.launch {
-                    val token = TokenManager.getTokenOnce(context) ?: return@launch
-                    try {
-                        val response = RetrofitClient.api.addPaymentMethod("Bearer $token", request)
-                        if (response.isSuccessful) {
-                            Toast.makeText(context, "Tarjeta añadida", Toast.LENGTH_SHORT).show()
-                            showAddSheet = false
-                            isLoading = true
-                            loadMethods()
-                        } else {
-                            Toast.makeText(context, "Error al añadir", Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "Error de conexión", Toast.LENGTH_SHORT).show()
-                    }
+                    methods = methods + PaymentMethodDto(
+                        id = "pm_${System.currentTimeMillis()}",
+                        payment_type = request.payment_type,
+                        card_last_four = request.card_last_four,
+                        card_brand = request.card_brand,
+                        card_expiry_month = request.card_expiry_month,
+                        card_expiry_year = request.card_expiry_year,
+                        is_default = request.is_default
+                    )
+                    showAddSheet = false
+                    Toast.makeText(context, "Tarjeta añadida", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -184,17 +172,8 @@ fun PaymentMethodsScreen(navController: NavController) {
                     PaymentCard(
                         method = method,
                         onDelete = {
-                            scope.launch {
-                                val token = TokenManager.getTokenOnce(context) ?: return@launch
-                                try {
-                                    RetrofitClient.api.deletePaymentMethod("Bearer $token", method.id)
-                                    Toast.makeText(context, "Tarjeta eliminada", Toast.LENGTH_SHORT).show()
-                                    isLoading = true
-                                    loadMethods()
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Error al eliminar", Toast.LENGTH_SHORT).show()
-                                }
-                            }
+                            methods = methods.filter { it.id != method.id }
+                            Toast.makeText(context, "Tarjeta eliminada", Toast.LENGTH_SHORT).show()
                         }
                     )
                     Spacer(Modifier.height(HoloSpacing.sm))

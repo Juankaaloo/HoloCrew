@@ -56,16 +56,7 @@ fun AddressesScreen(navController: NavController) {
 
     // Función para cargar/recargar direcciones desde la API
     fun loadAddresses() {
-        scope.launch {
-            val token = TokenManager.getTokenOnce(context) ?: return@launch
-            try {
-                val response = RetrofitClient.api.getAddresses("Bearer $token")
-                if (response.isSuccessful && response.body()?.success == true) {
-                    addresses = response.body()!!.data ?: emptyList()
-                }
-            } catch (e: Exception) { e.printStackTrace() }
-            isLoading = false
-        }
+        isLoading = false
     }
 
     LaunchedEffect(Unit) { loadAddresses() }
@@ -76,18 +67,19 @@ fun AddressesScreen(navController: NavController) {
             onDismiss = { showAddSheet = false },
             onSave = { request ->
                 scope.launch {
-                    val token = TokenManager.getTokenOnce(context) ?: return@launch
-                    try {
-                        val response = RetrofitClient.api.addAddress("Bearer $token", request)
-                        if (response.isSuccessful) {
-                            Toast.makeText(context, "Dirección añadida", Toast.LENGTH_SHORT).show()
-                            showAddSheet = false
-                            isLoading = true
-                            loadAddresses()
-                        }
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "Error de conexión", Toast.LENGTH_SHORT).show()
-                    }
+                    addresses = addresses + AddressDto(
+                        id = "addr_${System.currentTimeMillis()}",
+                        recipient_name = request.recipient_name,
+                        street_address = request.street_address,
+                        apartment = request.apartment,
+                        city = request.city,
+                        postal_code = request.postal_code,
+                        country_code = request.country_code,
+                        phone = request.phone,
+                        is_default = request.is_default
+                    )
+                    showAddSheet = false
+                    Toast.makeText(context, "Dirección añadida", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -175,17 +167,8 @@ fun AddressesScreen(navController: NavController) {
                     AddressCard(
                         address = address,
                         onDelete = {
-                            scope.launch {
-                                val token = TokenManager.getTokenOnce(context) ?: return@launch
-                                try {
-                                    RetrofitClient.api.deleteAddress("Bearer $token", address.id)
-                                    Toast.makeText(context, "Dirección eliminada", Toast.LENGTH_SHORT).show()
-                                    isLoading = true
-                                    loadAddresses()
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Error al eliminar", Toast.LENGTH_SHORT).show()
-                                }
-                            }
+                            addresses = addresses.filter { it.id != address.id }
+                            Toast.makeText(context, "Dirección eliminada", Toast.LENGTH_SHORT).show()
                         }
                     )
                     Spacer(Modifier.height(HoloSpacing.sm))

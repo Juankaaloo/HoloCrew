@@ -42,13 +42,6 @@ fun MyOrdersScreen(navController: NavController) {
 
     // Cargar pedidos al entrar
     LaunchedEffect(Unit) {
-        val token = TokenManager.getTokenOnce(context) ?: return@LaunchedEffect
-        try {
-            val response = RetrofitClient.api.getOrders("Bearer $token")
-            if (response.isSuccessful && response.body()?.success == true) {
-                orders = response.body()!!.data ?: emptyList()
-            }
-        } catch (e: Exception) { e.printStackTrace() }
         isLoading = false
     }
 
