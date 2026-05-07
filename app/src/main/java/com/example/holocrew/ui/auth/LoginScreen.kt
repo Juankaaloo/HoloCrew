@@ -30,8 +30,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.holocrew.R
-import com.example.holocrew.data.CartManager
-import com.example.holocrew.data.FavoritesManager
+import com.example.holocrew.data.network.CartRepository
+import com.example.holocrew.data.network.WishlistRepository
 import com.example.holocrew.data.TokenManager
 import com.example.holocrew.theme.HoloColors
 import com.example.holocrew.theme.HoloMotion
@@ -66,6 +66,16 @@ fun LoginScreen(navController: NavController) {
         animationSpec = HoloMotion.smoothSpring(),
         label = "loginBtnScale"
     )
+
+    // Al principio del LaunchedEffect(Unit) que ya tengas, o añade uno nuevo:
+    LaunchedEffect(Unit) {
+        // Si ya hay sesión activa, saltar al home directamente
+        if (TokenManager.isLoggedIn()) {
+            TokenManager.loadProfile()
+            navController.navigate("home") { popUpTo(0) { inclusive = true } }
+            return@LaunchedEffect
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -151,8 +161,8 @@ fun LoginScreen(navController: NavController) {
                         // ✅ Login directo con Supabase Auth
                         val result = TokenManager.signIn(email.trim(), password)
                         result.onSuccess {
-                            CartManager.loadCart(context)
-                            FavoritesManager.loadFavorites(context)
+                            CartRepository.loadCart()
+                            WishlistRepository.loadFavorites()
                             navController.navigate("home") { popUpTo("login") { inclusive = true } }
                         }.onFailure { error ->
                             val message = when {

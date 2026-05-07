@@ -31,8 +31,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.holocrew.R
-import com.example.holocrew.data.CartManager
-import com.example.holocrew.data.FavoritesManager
+import com.example.holocrew.data.network.CartRepository
+import com.example.holocrew.data.network.WishlistRepository
 import com.example.holocrew.data.TokenManager
 import com.example.holocrew.theme.HoloColors
 import com.example.holocrew.theme.HoloMotion
@@ -176,8 +176,8 @@ fun RegisterScreen(navController: NavController) {
                             // ✅ Registro directo con Supabase Auth
                             val result = TokenManager.signUp(email.trim(), password, name.trim(), lastName.trim())
                             result.onSuccess {
-                                CartManager.loadCart(context)
-                                FavoritesManager.loadFavorites(context)
+                                CartRepository.loadCart()
+                                WishlistRepository.loadFavorites()
                                 navController.navigate("home") { popUpTo("login") { inclusive = true } }
                             }.onFailure { error ->
                                 val message = when {

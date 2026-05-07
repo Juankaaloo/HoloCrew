@@ -41,7 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.holocrew.R
-import com.example.holocrew.data.FavoritesManager
+import com.example.holocrew.data.network.WishlistRepository
 import com.example.holocrew.theme.HoloColors
 
 /**
@@ -57,7 +57,7 @@ fun CustomTopAppBar(
     onFavoritesClick: () -> Unit = {}
 ) {
     // Observar el número de favoritos para el badge
-    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
+    val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
     val favCount = favoriteIds.size
 
     TopAppBar(

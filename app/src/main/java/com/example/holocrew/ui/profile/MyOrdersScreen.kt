@@ -15,33 +15,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.example.holocrew.data.TokenManager
-import com.example.holocrew.data.network.OrderDto
-import com.example.holocrew.data.network.RetrofitClient
+import com.example.holocrew.data.network.OrderRepository
+import com.example.holocrew.data.network.SbOrderDto
 import com.example.holocrew.theme.HoloColors
 import com.example.holocrew.theme.HoloSpacing
 import com.example.holocrew.theme.HoloType
 
-/**
- * MyOrdersScreen — Historial de pedidos del usuario.
- *
- * Header negro SNKRS + lista de OrderCards con badge de estado colorizado.
- * Los pedidos se cargan desde GET /api/orders al entrar.
- *
- * @param navController Controlador de navegación.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyOrdersScreen(navController: NavController) {
-    val context = LocalContext.current
-    var orders by remember { mutableStateOf<List<OrderDto>>(emptyList()) }
+    var orders by remember { mutableStateOf<List<SbOrderDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Cargar pedidos al entrar
     LaunchedEffect(Unit) {
+        isLoading = true
+        orders = OrderRepository.getOrders()
         isLoading = false
     }
 
@@ -63,7 +53,6 @@ fun MyOrdersScreen(navController: NavController) {
             modifier = Modifier.fillMaxSize().padding(paddingValues),
             contentPadding = PaddingValues(bottom = HoloSpacing.xl)
         ) {
-            // ── Header negro con gradiente ────────────────────────────────────
             item {
                 Box(
                     modifier = Modifier.fillMaxWidth()
@@ -76,7 +65,7 @@ fun MyOrdersScreen(navController: NavController) {
                         Text("Historial de compras", style = HoloType.HeadlineLarge, color = HoloColors.TextOnDark)
                         Spacer(Modifier.height(HoloSpacing.xxs))
                         Text(
-                            if (orders.isEmpty() && !isLoading) "No tienes pedidos todavía"
+                            if (orders.isEmpty() && !isLoading) "No tienes pedidos todavia"
                             else "${orders.size} pedido${if (orders.size != 1) "s" else ""}",
                             style = HoloType.BodyMedium, color = HoloColors.TextOnDarkMuted
                         )
@@ -87,7 +76,7 @@ fun MyOrdersScreen(navController: NavController) {
             if (isLoading) {
                 item {
                     Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        Text("Cargando...", style = HoloType.TitleLarge, color = HoloColors.TextTertiary)
+                        CircularProgressIndicator(color = HoloColors.Ink)
                     }
                 }
             } else if (orders.isEmpty()) {
@@ -98,7 +87,7 @@ fun MyOrdersScreen(navController: NavController) {
                     ) {
                         Icon(Icons.Outlined.Inventory2, null, tint = HoloColors.Neutral300, modifier = Modifier.size(HoloSpacing.huge))
                         Spacer(Modifier.height(HoloSpacing.lg))
-                        Text("Aún no has hecho ningún pedido", style = HoloType.TitleLarge, color = HoloColors.TextSecondary)
+                        Text("Aun no has hecho ningun pedido", style = HoloType.TitleLarge, color = HoloColors.TextSecondary)
                         Spacer(Modifier.height(HoloSpacing.xl))
                         Button(
                             onClick = { navController.navigate("available") { launchSingleTop = true } },
@@ -121,13 +110,8 @@ fun MyOrdersScreen(navController: NavController) {
     }
 }
 
-/**
- * OrderCard — Card individual de un pedido.
- * Muestra order_number, fecha, badge de estado, nº productos y total.
- */
 @Composable
-fun OrderCard(order: OrderDto) {
-    // Color y label según el estado del pedido
+fun OrderCard(order: SbOrderDto) {
     val statusConfig = when (order.status) {
         "delivered" -> HoloColors.Success to "Entregado"
         "shipped" -> HoloColors.Info to "En camino"
@@ -139,6 +123,8 @@ fun OrderCard(order: OrderDto) {
         else -> HoloColors.Neutral400 to order.status
     }
 
+    val itemCount = order.orderItems?.size ?: 0
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = HoloSpacing.md),
         shape = RoundedCornerShape(HoloSpacing.RadiusLg),
@@ -148,11 +134,13 @@ fun OrderCard(order: OrderDto) {
         Column(modifier = Modifier.padding(HoloSpacing.lg)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column {
-                    // Número de pedido en monospace
-                    Text(order.order_number, style = HoloType.MonoMedium, color = HoloColors.TextPrimary)
-                    Text(order.created_at.take(10), style = HoloType.BodySmall, color = HoloColors.TextTertiary, modifier = Modifier.padding(top = 2.dp))
+                    Text(order.orderNumber, style = HoloType.MonoMedium, color = HoloColors.TextPrimary)
+                    Text(
+                        (order.createdAt ?: "").take(10),
+                        style = HoloType.BodySmall, color = HoloColors.TextTertiary,
+                        modifier = Modifier.padding(top = 2.dp)
+                    )
                 }
-                // Badge de estado con color semitransparente
                 Box(
                     modifier = Modifier.clip(RoundedCornerShape(HoloSpacing.RadiusPill))
                         .background(statusConfig.first.copy(alpha = 0.1f))
@@ -167,9 +155,9 @@ fun OrderCard(order: OrderDto) {
             Spacer(Modifier.height(HoloSpacing.md))
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text("${order.item_count} producto${if (order.item_count != 1) "s" else ""}", style = HoloType.BodyMedium, color = HoloColors.TextSecondary)
+                Text("$itemCount producto${if (itemCount != 1) "s" else ""}", style = HoloType.BodyMedium, color = HoloColors.TextSecondary)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("${order.total_eur}€", style = HoloType.MonoLarge, color = HoloColors.TextPrimary)
+                    Text("${"%.2f".format(order.total)}\u20AC", style = HoloType.MonoLarge, color = HoloColors.TextPrimary)
                     Spacer(Modifier.width(HoloSpacing.xxs))
                     Icon(Icons.Filled.ChevronRight, null, tint = HoloColors.Neutral300, modifier = Modifier.size(HoloSpacing.IconSizeDefault))
                 }

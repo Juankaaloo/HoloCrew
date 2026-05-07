@@ -21,8 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.holocrew.components.BottomNavigationBar
-import com.example.holocrew.data.CartManager
-import com.example.holocrew.data.FavoritesManager
+import com.example.holocrew.data.network.CartRepository
+import com.example.holocrew.data.network.WishlistRepository
 import com.example.holocrew.data.TokenManager
 import com.example.holocrew.theme.HoloColors
 import com.example.holocrew.theme.HoloSpacing
@@ -59,10 +59,16 @@ fun ProfileScreen(navController: NavController? = null) {
     val userTier by TokenManager.getUserTier(context).collectAsState(initial = "bronze")
 
     // ── Contadores de favoritos y carrito (observados en tiempo real) ──────────
-    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
-    val cartItems by CartManager.items.collectAsState()
+    val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
+    val cartItems by CartRepository.cartItems.collectAsState()
     val favCount = favoriteIds.size
     val cartCount = cartItems.sumOf { it.quantity }
+
+    var orderCount by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        orderCount = com.example.holocrew.data.network.OrderRepository.getOrders().size
+    }
 
     // ── Iniciales del usuario para el avatar ──────────────────────────────────
     val initials = remember(userName) {
@@ -194,7 +200,7 @@ fun ProfileScreen(navController: NavController? = null) {
                         .padding(bottom = HoloSpacing.xl),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatCard(value = "0", label = "Pedidos", icon = Icons.Outlined.ShoppingBag)
+                    StatCard(value = "$orderCount", label = "Pedidos", icon = Icons.Outlined.ShoppingBag)
                     StatCard(value = "$favCount", label = "Favoritos", icon = Icons.Outlined.FavoriteBorder)
                     StatCard(value = "$cartCount", label = "En carrito", icon = Icons.Outlined.ShoppingCart)
                 }
@@ -344,8 +350,8 @@ fun ProfileScreen(navController: NavController? = null) {
                             scope.launch {
                                 // Limpiar sesión: token + carrito + favoritos
                                 TokenManager.clearToken(context)
-                                CartManager.clearCart(context)
-                                FavoritesManager.clearFavorites()
+                                scope.launch { CartRepository.clearCart() }
+                                WishlistRepository.clearLocal()
                                 // Volver a login limpiando todo el backstack
                                 navController?.navigate("login") {
                                     popUpTo(0) { inclusive = true }

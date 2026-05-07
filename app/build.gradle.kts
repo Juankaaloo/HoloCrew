@@ -76,7 +76,10 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // Coil
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // ViewModel Compose — viewModel() en composables
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

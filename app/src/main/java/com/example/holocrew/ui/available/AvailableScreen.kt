@@ -1,6 +1,5 @@
 package com.example.holocrew.ui.available
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,46 +20,43 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.holocrew.components.BottomNavigationBar
 import com.example.holocrew.components.CustomTopAppBar
-import com.example.holocrew.data.CartManager
-import com.example.holocrew.data.FavoritesManager
-import com.example.holocrew.data.network.RetrofitClient
+import com.example.holocrew.data.network.CartRepository
+import com.example.holocrew.data.network.ProductRepository
+import com.example.holocrew.data.network.WishlistRepository
 import com.example.holocrew.ui.product.ProductDetail
-import com.example.holocrew.ui.product.mockProducts
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvailableScreen(navController: NavController? = null) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var selectedFilter by remember { mutableStateOf("Todos") }
     val snackbarHostState = remember { SnackbarHostState() }
+    val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
 
-    // Intentar cargar productos de la API, fallback a mockProducts
-    var apiProducts by remember { mutableStateOf<List<ProductDetail>?>(null) }
+    var allProducts by remember { mutableStateOf<List<ProductDetail>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+
     LaunchedEffect(Unit) {
-        try {
-            val response = RetrofitClient.api.getProducts()
-            if (response.isSuccessful && response.body()?.success == true) {
-                // Si la API devuelve datos, se usarían aquí
-                // Por ahora usamos mockProducts ya que las imágenes son locales
-            }
-        } catch (e: Exception) { /* Usar mock */ }
+        isLoading = true
+        allProducts = ProductRepository.getAll()
+        WishlistRepository.loadFavorites()
+        isLoading = false
     }
 
-    val allProducts = mockProducts
-    val categories = remember { listOf("Todos") + allProducts.map { it.category }.distinct() }
-    val filteredProducts = remember(selectedFilter) {
+    val categories = remember(allProducts) {
+        listOf("Todos") + allProducts.map { it.category }.distinct()
+    }
+    val filteredProducts = remember(selectedFilter, allProducts) {
         if (selectedFilter == "Todos") allProducts else allProducts.filter { it.category == selectedFilter }
     }
     val featuredProduct = filteredProducts.firstOrNull()
@@ -77,6 +73,14 @@ fun AvailableScreen(navController: NavController? = null) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color.White
     ) { paddingValues ->
+
+        if (isLoading) {
+            Box(Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = Color.Black)
+            }
+            return@Scaffold
+        }
+
         LazyColumn(modifier = Modifier.fillMaxSize().padding(paddingValues), contentPadding = PaddingValues(bottom = 80.dp)) {
 
             item {
@@ -96,14 +100,15 @@ fun AvailableScreen(navController: NavController? = null) {
                 item {
                     FeaturedProductCard(
                         product = featuredProduct,
+                        isFavorite = favoriteIds.contains(featuredProduct.id),
                         onClick = { navController?.navigate("product_detail/${featuredProduct.id}") },
                         onAddToCart = {
                             scope.launch {
-                                CartManager.addItem(context, featuredProduct.id)
-                                snackbarHostState.showSnackbar("${featuredProduct.title} añadido al carrito")
+                                CartRepository.addItem(featuredProduct.id, featuredProduct.priceRaw)
+                                snackbarHostState.showSnackbar("${featuredProduct.title} agregado al carrito")
                             }
                         },
-                        onToggleFavorite = { scope.launch { FavoritesManager.toggleFavorite(context, featuredProduct.id) } }
+                        onToggleFavorite = { scope.launch { WishlistRepository.toggleFavorite(featuredProduct.id, featuredProduct.priceRaw) } }
                     )
                     Spacer(Modifier.height(16.dp))
                 }
@@ -115,15 +120,16 @@ fun AvailableScreen(navController: NavController? = null) {
                     rowProducts.forEach { product ->
                         ProductGridCard(
                             product = product,
+                            isFavorite = favoriteIds.contains(product.id),
                             modifier = Modifier.weight(1f),
                             onClick = { navController?.navigate("product_detail/${product.id}") },
                             onAddToCart = {
                                 scope.launch {
-                                    CartManager.addItem(context, product.id)
-                                    snackbarHostState.showSnackbar("${product.title} añadido al carrito")
+                                    CartRepository.addItem(product.id, product.priceRaw)
+                                    snackbarHostState.showSnackbar("${product.title} agregado al carrito")
                                 }
                             },
-                            onToggleFavorite = { scope.launch { FavoritesManager.toggleFavorite(context, product.id) } }
+                            onToggleFavorite = { scope.launch { WishlistRepository.toggleFavorite(product.id, product.priceRaw) } }
                         )
                     }
                     if (rowProducts.size == 1) Spacer(Modifier.weight(1f))
@@ -142,12 +148,9 @@ fun CategoryFilterChip(text: String, isSelected: Boolean = false, onClick: () ->
 }
 
 @Composable
-fun FeaturedProductCard(product: ProductDetail, onClick: () -> Unit = {}, onAddToCart: () -> Unit = {}, onToggleFavorite: () -> Unit = {}) {
-    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
-    val isFavorite = favoriteIds.contains(product.id)
-
+fun FeaturedProductCard(product: ProductDetail, isFavorite: Boolean, onClick: () -> Unit = {}, onAddToCart: () -> Unit = {}, onToggleFavorite: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxWidth().height(380.dp).padding(horizontal = 16.dp).clip(RoundedCornerShape(16.dp)).clickable { onClick() }) {
-        Image(painter = painterResource(id = product.imageRes), contentDescription = product.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        AsyncImage(model = product.imageUrl, contentDescription = product.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(modifier = Modifier.fillMaxWidth().height(200.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
         Box(modifier = Modifier.padding(14.dp).align(Alignment.TopStart).clip(RoundedCornerShape(8.dp)).background(statusBadgeColor(product.status)).padding(horizontal = 10.dp, vertical = 5.dp)) {
             Text(product.status.uppercase(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -164,19 +167,16 @@ fun FeaturedProductCard(product: ProductDetail, onClick: () -> Unit = {}, onAddT
             }
         }
         Box(modifier = Modifier.align(Alignment.BottomEnd).padding(14.dp).size(42.dp).clip(CircleShape).background(Color.White).clickable { onAddToCart() }, contentAlignment = Alignment.Center) {
-            Icon(Icons.Filled.Add, "Añadir", tint = Color.Black, modifier = Modifier.size(22.dp))
+            Icon(Icons.Filled.Add, "Agregar", tint = Color.Black, modifier = Modifier.size(22.dp))
         }
     }
 }
 
 @Composable
-fun ProductGridCard(product: ProductDetail, modifier: Modifier = Modifier, onClick: () -> Unit = {}, onAddToCart: () -> Unit = {}, onToggleFavorite: () -> Unit = {}) {
-    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
-    val isFavorite = favoriteIds.contains(product.id)
-
+fun ProductGridCard(product: ProductDetail, isFavorite: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit = {}, onAddToCart: () -> Unit = {}, onToggleFavorite: () -> Unit = {}) {
     Column(modifier = modifier.clickable { onClick() }) {
         Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFFF5F5F5))) {
-            Image(painter = painterResource(id = product.imageRes), contentDescription = product.title, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)), contentScale = ContentScale.Crop)
+            AsyncImage(model = product.imageUrl, contentDescription = product.title, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)), contentScale = ContentScale.Crop)
             if (product.status.isNotEmpty()) {
                 Box(modifier = Modifier.padding(8.dp).align(Alignment.TopStart).clip(RoundedCornerShape(6.dp)).background(statusBadgeColor(product.status)).padding(horizontal = 8.dp, vertical = 4.dp)) {
                     Text(product.status.uppercase(), color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
@@ -186,7 +186,7 @@ fun ProductGridCard(product: ProductDetail, modifier: Modifier = Modifier, onCli
                 Icon(if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorito", tint = if (isFavorite) Color.Red else Color(0xFFBDBDBD), modifier = Modifier.size(18.dp))
             }
             Box(modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).size(32.dp).clip(CircleShape).background(Color.Black).clickable { onAddToCart() }, contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.Add, "Añadir", tint = Color.White, modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.Add, "Agregar", tint = Color.White, modifier = Modifier.size(16.dp))
             }
         }
         Spacer(Modifier.height(10.dp))
@@ -202,9 +202,11 @@ fun ProductGridCard(product: ProductDetail, modifier: Modifier = Modifier, onCli
 fun statusBadgeColor(status: String): Color = when (status) {
     "Nuevo" -> Color(0xFF4CAF50)
     "Exclusivo" -> Color(0xFF9C27B0)
-    "Más vendido" -> Color(0xFFF44336)
+    "Mas vendido" -> Color(0xFFF44336)
     "En oferta" -> Color(0xFFFF9800)
     "Premium" -> Color(0xFFD4AF37)
     "Limitado" -> Color(0xFFE91E63)
+    "Flash Sale" -> Color(0xFFFF5722)
+    "Black Week" -> Color(0xFF212121)
     else -> Color(0xFF607D8B)
 }

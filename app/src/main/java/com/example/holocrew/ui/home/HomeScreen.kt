@@ -20,76 +20,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.holocrew.R
 import com.example.holocrew.components.BottomNavigationBar
 import com.example.holocrew.components.CustomTopAppBar
-import com.example.holocrew.data.FavoritesManager
+import com.example.holocrew.data.network.WishlistRepository
 import com.example.holocrew.theme.HoloColors
 import com.example.holocrew.theme.HoloSpacing
 import com.example.holocrew.theme.HoloType
 import com.example.holocrew.ui.product.ProductDetail
-import com.example.holocrew.ui.product.mockProducts
 import kotlinx.coroutines.launch
 
-// ══════════════════════════════════════════════════════════════════════════════
-// MODELO — Producto del feed principal (hero carousel y main cards)
-// Usa UUIDs reales de la BDD MySQL para navegación directa al detalle.
-// ══════════════════════════════════════════════════════════════════════════════
-data class FeedProduct(
-    val id: String,         // UUID real de la tabla products
-    val subtitle: String,   // Línea descriptiva ("Holo Crew · Hoodie")
-    val title: String,      // Nombre del producto (puede tener \n)
-    val imageRes: Int,      // R.drawable.xxx — local hasta migrar a Supabase Storage
-    val price: String       // Precio formateado con € ("129.99€")
-)
-
-/**
- * HomeScreen — Pantalla principal / escaparate de la app.
- *
- * Feed vertical estilo SNKRS con secciones intercaladas:
- *  1. Hero banner a pantalla completa con gradiente oscuro
- *  2. Carrusel horizontal "Drops Destacados"
- *  3. Sección negra "Exclusivos" con cards oscuras
- *  4. Card de producto destacado (grande, con imagen)
- *  5. Sección gris "Última oportunidad"
- *  6. Card de producto destacado #2
- *  7. Banner promo "Próximos drops"
- *  8. Carrusel "Nuevos lanzamientos"
- *  9. Sección "En tendencia" con cards de reseñas
- *  10. Banner final "Descubre toda la colección"
- *
- * Paleta: negro/blanco/rojo (Pulse #FF0033 sustituye al dorado anterior).
- *
- * @param navController Controlador de navegación para ir a detalle, available, etc.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    homeViewModel: HomeViewModel = viewModel()
+) {
+    val uiState by homeViewModel.uiState.collectAsState()
+    val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
 
-    // ── Datos del feed principal (UUIDs reales de MySQL) ──────────────────────
-    val feedProducts = remember {
-        listOf(
-            FeedProduct("2f275839-4230-11f1-a0bc-18c04d629171", "Holo Crew · Hoodie", "Pannel Hoodie\nBlack Edition", R.drawable.pannels_hoodie, "129.99€"),
-            FeedProduct("2f306720-4230-11f1-a0bc-18c04d629171", "Holo Crew · Polo", "Glory Holo Polo\nWhite", R.drawable.glory_holo_polo, "199.99€"),
-            FeedProduct("2f308ca4-4230-11f1-a0bc-18c04d629171", "Holo Crew · Edición Limitada", "Off-Road Racing Cap\nSolo 500 unidades", R.drawable.offroad_racing_cap, "299.99€"),
-            FeedProduct("2f3089b3-4230-11f1-a0bc-18c04d629171", "Holo Crew · Accesorios", "Shoulder Bag\nBlack Leather", R.drawable.shoulder_bag_holo_blackleather, "249.99€")
-        )
-    }
-
-    // ── Filtros de productos mock para cada sección ───────────────────────────
-    val exclusiveProducts = remember {
-        mockProducts.filter { it.status == "Exclusivo" || it.status == "Premium" || it.status == "Limitado" }
-    }
-    val collectionProducts = remember { mockProducts.take(6) }
-    val trendingProducts = remember { mockProducts.sortedByDescending { it.rating }.take(4) }
-    val newProducts = remember { mockProducts.filter { it.status == "Nuevo" || it.status == "En oferta" } }
-
-    // ── Scaffold con topBar custom + bottomNav flotante ───────────────────────
     Scaffold(
         topBar = {
             CustomTopAppBar(
@@ -101,6 +56,45 @@ fun HomeScreen(navController: NavController) {
         containerColor = HoloColors.Paper
     ) { paddingValues ->
 
+        // Estado de carga
+        if (uiState.isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = HoloColors.Ink)
+            }
+            return@Scaffold
+        }
+
+        // Estado de error
+        if (uiState.error != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = uiState.error ?: "Error desconocido",
+                        style = HoloType.BodyLarge,
+                        color = HoloColors.TextSecondary
+                    )
+                    Spacer(Modifier.height(HoloSpacing.md))
+                    Button(
+                        onClick = { homeViewModel.refresh() },
+                        colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Ink)
+                    ) {
+                        Text("Reintentar", color = HoloColors.Paper)
+                    }
+                }
+            }
+            return@Scaffold
+        }
+
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -108,9 +102,7 @@ fun HomeScreen(navController: NavController) {
             contentPadding = PaddingValues(bottom = HoloSpacing.BottomNavHeight)
         ) {
 
-            // ══════════════════════════════════════════════════════════════════
-            // 1. HERO BANNER — imagen fullwidth con gradiente y CTA
-            // ══════════════════════════════════════════════════════════════════
+            // 1. HERO BANNER (imagen local — no depende de Supabase)
             item {
                 HeroBanner(
                     imageRes = R.drawable.footwear,
@@ -121,132 +113,122 @@ fun HomeScreen(navController: NavController) {
                 )
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // 2. DROPS DESTACADOS — carrusel horizontal de PagerCards
-            // ══════════════════════════════════════════════════════════════════
-            item {
-                Column(modifier = Modifier.padding(top = HoloSpacing.xl)) {
-                    SectionHeader(
-                        title = "DROPS DESTACADOS",
-                        actionText = "Ver todo",
-                        onAction = { navController.navigate("available") { launchSingleTop = true } }
-                    )
-                    Spacer(Modifier.height(HoloSpacing.sm))
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = HoloSpacing.md),
-                        horizontalArrangement = Arrangement.spacedBy(HoloSpacing.sm)
-                    ) {
-                        items(feedProducts) { product ->
-                            PagerCard(
-                                product = product,
-                                onClick = { navController.navigate("product_detail/${product.id}") }
-                            )
+            // 2. DROPS DESTACADOS
+            if (uiState.featuredProducts.isNotEmpty()) {
+                item {
+                    Column(modifier = Modifier.padding(top = HoloSpacing.xl)) {
+                        SectionHeader(
+                            title = "DROPS DESTACADOS",
+                            actionText = "Ver todo",
+                            onAction = { navController.navigate("available") { launchSingleTop = true } }
+                        )
+                        Spacer(Modifier.height(HoloSpacing.sm))
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = HoloSpacing.md),
+                            horizontalArrangement = Arrangement.spacedBy(HoloSpacing.sm)
+                        ) {
+                            items(uiState.featuredProducts) { product ->
+                                PagerCard(
+                                    product = product,
+                                    onClick = { navController.navigate("product_detail/${product.id}") }
+                                )
+                            }
                         }
                     }
                 }
+
+                item { Spacer(Modifier.height(HoloSpacing.xl)) }
             }
 
-            item { Spacer(Modifier.height(HoloSpacing.xl)) }
-
-            // ══════════════════════════════════════════════════════════════════
-            // 3. EXCLUSIVOS — sección con fondo negro + cards oscuras
-            // ══════════════════════════════════════════════════════════════════
-            item {
-                DarkSection(
-                    title = "EXCLUSIVOS HOLOCREW",
-                    subtitle = "Piezas de edición limitada",
-                    products = exclusiveProducts,
-                    onProductClick = { navController.navigate("product_detail/${it.id}") },
-                    onSeeAllClick = { navController.navigate("available") { launchSingleTop = true } }
-                )
+            // 3. EXCLUSIVOS
+            if (uiState.exclusiveProducts.isNotEmpty()) {
+                item {
+                    DarkSection(
+                        title = "EXCLUSIVOS HOLOCREW",
+                        subtitle = "Piezas de edicion limitada",
+                        products = uiState.exclusiveProducts,
+                        onProductClick = { navController.navigate("product_detail/${it.id}") },
+                        onSeeAllClick = { navController.navigate("available") { launchSingleTop = true } }
+                    )
+                }
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // 4. CARD DESTACADA #1 — producto grande con imagen
-            // ══════════════════════════════════════════════════════════════════
-            item {
-                MainProductCard(
-                    product = feedProducts[0],
-                    onClick = { navController.navigate("product_detail/${feedProducts[0].id}") }
-                )
+            // 4. CARD DESTACADA #1
+            if (uiState.featuredProducts.isNotEmpty()) {
+                item {
+                    MainProductCard(
+                        product = uiState.featuredProducts.first(),
+                        onClick = { navController.navigate("product_detail/${uiState.featuredProducts.first().id}") }
+                    )
+                }
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // 5. ÚLTIMA OPORTUNIDAD — sección con fondo gris claro
-            // ══════════════════════════════════════════════════════════════════
-            item {
-                GraySection(
-                    title = "Última oportunidad,\n¡aprovéchala!",
-                    products = collectionProducts.take(4),
-                    onProductClick = { navController.navigate("product_detail/${it.id}") },
-                    onSeeAllClick = { navController.navigate("available") { launchSingleTop = true } }
-                )
+            // 5. ULTIMA OPORTUNIDAD
+            if (uiState.onSaleProducts.isNotEmpty()) {
+                item {
+                    GraySection(
+                        title = "Ultima oportunidad,\naprovechala!",
+                        products = uiState.onSaleProducts,
+                        onProductClick = { navController.navigate("product_detail/${it.id}") },
+                        onSeeAllClick = { navController.navigate("available") { launchSingleTop = true } }
+                    )
+                }
             }
 
-            // ══════════════════════════════════════════════════════════════════
             // 6. CARD DESTACADA #2
-            // ══════════════════════════════════════════════════════════════════
-            item {
-                MainProductCard(
-                    product = feedProducts[1],
-                    onClick = { navController.navigate("product_detail/${feedProducts[1].id}") }
-                )
+            if (uiState.featuredProducts.size > 1) {
+                item {
+                    MainProductCard(
+                        product = uiState.featuredProducts[1],
+                        onClick = { navController.navigate("product_detail/${uiState.featuredProducts[1].id}") }
+                    )
+                }
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // 7. PROMO BANNER — bloque negro con CTA a Upcoming
-            // ══════════════════════════════════════════════════════════════════
+            // 7. PROMO BANNER
             item {
                 PromoBanner(
                     onExploreClick = { navController.navigate("upcoming") { launchSingleTop = true } }
                 )
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // 8. NUEVOS LANZAMIENTOS — carrusel horizontal
-            // ══════════════════════════════════════════════════════════════════
-            item {
-                Column(modifier = Modifier.padding(vertical = HoloSpacing.xl)) {
-                    SectionHeader(
-                        title = "NUEVOS LANZAMIENTOS",
-                        actionText = "Ver todo",
-                        onAction = { navController.navigate("available") { launchSingleTop = true } }
-                    )
-                    Spacer(Modifier.height(HoloSpacing.sm))
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = HoloSpacing.md),
-                        horizontalArrangement = Arrangement.spacedBy(HoloSpacing.sm)
-                    ) {
-                        items(newProducts) { product ->
-                            PagerCard(
-                                product = FeedProduct(
-                                    product.id,
-                                    product.brand,
-                                    "${product.title}\n${product.subtitle}",
-                                    product.imageRes,
-                                    product.price
-                                ),
-                                onClick = { navController.navigate("product_detail/${product.id}") }
-                            )
+            // 8. NUEVOS LANZAMIENTOS
+            if (uiState.newProducts.isNotEmpty()) {
+                item {
+                    Column(modifier = Modifier.padding(vertical = HoloSpacing.xl)) {
+                        SectionHeader(
+                            title = "NUEVOS LANZAMIENTOS",
+                            actionText = "Ver todo",
+                            onAction = { navController.navigate("available") { launchSingleTop = true } }
+                        )
+                        Spacer(Modifier.height(HoloSpacing.sm))
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = HoloSpacing.md),
+                            horizontalArrangement = Arrangement.spacedBy(HoloSpacing.sm)
+                        ) {
+                            items(uiState.newProducts) { product ->
+                                PagerCard(
+                                    product = product,
+                                    onClick = { navController.navigate("product_detail/${product.id}") }
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // 9. EN TENDENCIA — cards con rating y reseñas
-            // ══════════════════════════════════════════════════════════════════
-            item {
-                TrendingSection(
-                    products = trendingProducts,
-                    onProductClick = { navController.navigate("product_detail/${it.id}") },
-                    onSeeAllClick = { navController.navigate("available") { launchSingleTop = true } }
-                )
+            // 9. EN TENDENCIA
+            if (uiState.trendingProducts.isNotEmpty()) {
+                item {
+                    TrendingSection(
+                        products = uiState.trendingProducts,
+                        onProductClick = { navController.navigate("product_detail/${it.id}") },
+                        onSeeAllClick = { navController.navigate("available") { launchSingleTop = true } }
+                    )
+                }
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // 10. BANNER FINAL — CTA al catálogo completo
-            // ══════════════════════════════════════════════════════════════════
+            // 10. BANNER FINAL
             item {
                 FinalBanner(
                     onClick = { navController.navigate("available") { launchSingleTop = true } }
@@ -260,15 +242,8 @@ fun HomeScreen(navController: NavController) {
 
 // ══════════════════════════════════════════════════════════════════════════════
 // COMPONENTES DEL HOME
-// Cada composable es un bloque visual independiente del feed.
 // ══════════════════════════════════════════════════════════════════════════════
 
-/**
- * HeroBanner — Imagen a pantalla completa con gradiente oscuro y CTA.
- *
- * Estilo SNKRS: imagen de fondo, gradiente negro desde abajo,
- * label rojo (Pulse), título blanco bold, botón blanco pill.
- */
 @Composable
 fun HeroBanner(
     imageRes: Int,
@@ -282,7 +257,6 @@ fun HeroBanner(
             .fillMaxWidth()
             .height(460.dp)
     ) {
-        // Imagen de fondo
         Image(
             painter = painterResource(id = imageRes),
             contentDescription = "Banner",
@@ -290,7 +264,6 @@ fun HeroBanner(
             contentScale = ContentScale.Crop
         )
 
-        // Gradiente oscuro desde abajo para leer el texto
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -304,40 +277,17 @@ fun HeroBanner(
                 )
         )
 
-        // Contenido superpuesto (label, título, descripción, botón)
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xxl)
         ) {
-            // Label rojo — "NUEVO DROP" en uppercase con tracking
-            Text(
-                text = label,
-                style = HoloType.LabelMedium,
-                color = HoloColors.Pulse
-            )
-
+            Text(text = label, style = HoloType.LabelMedium, color = HoloColors.Pulse)
             Spacer(Modifier.height(HoloSpacing.xs))
-
-            // Título grande blanco
-            Text(
-                text = title,
-                style = HoloType.DisplayMedium,
-                color = HoloColors.TextOnDark
-            )
-
+            Text(text = title, style = HoloType.DisplayMedium, color = HoloColors.TextOnDark)
             Spacer(Modifier.height(HoloSpacing.xs))
-
-            // Descripción
-            Text(
-                text = description,
-                style = HoloType.BodyMedium,
-                color = HoloColors.TextOnDarkMuted
-            )
-
+            Text(text = description, style = HoloType.BodyMedium, color = HoloColors.TextOnDarkMuted)
             Spacer(Modifier.height(HoloSpacing.lg))
-
-            // Botón CTA blanco con texto negro
             Button(
                 onClick = onShopClick,
                 colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Paper),
@@ -354,12 +304,6 @@ fun HeroBanner(
     }
 }
 
-/**
- * SectionHeader — Título de sección con acción "Ver todo" a la derecha.
- *
- * Estilo SNKRS: label uppercase negro a la izquierda, texto gris + flecha
- * a la derecha como acción secundaria.
- */
 @Composable
 fun SectionHeader(
     title: String,
@@ -373,22 +317,13 @@ fun SectionHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            style = HoloType.LabelLarge,
-            color = HoloColors.TextPrimary
-        )
-
+        Text(text = title, style = HoloType.LabelLarge, color = HoloColors.TextPrimary)
         if (actionText.isNotEmpty()) {
             Row(
                 modifier = Modifier.clickable { onAction() },
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = actionText,
-                    style = HoloType.TitleSmall,
-                    color = HoloColors.TextSecondary
-                )
+                Text(text = actionText, style = HoloType.TitleSmall, color = HoloColors.TextSecondary)
                 Icon(
                     imageVector = Icons.Filled.ArrowForward,
                     contentDescription = null,
@@ -402,14 +337,9 @@ fun SectionHeader(
     }
 }
 
-/**
- * PagerCard — Card grande horizontal para carruseles de drops.
- *
- * 300x380dp con imagen de fondo, gradiente oscuro inferior,
- * subtítulo + título + precio en rojo Pulse + icono compartir.
- */
+// PagerCard ahora usa ProductDetail + AsyncImage (Coil)
 @Composable
-fun PagerCard(product: FeedProduct, onClick: () -> Unit = {}) {
+fun PagerCard(product: ProductDetail, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .width(300.dp)
@@ -417,15 +347,13 @@ fun PagerCard(product: FeedProduct, onClick: () -> Unit = {}) {
             .clip(RoundedCornerShape(HoloSpacing.RadiusLg))
             .clickable { onClick() }
     ) {
-        // Imagen de fondo
-        Image(
-            painter = painterResource(id = product.imageRes),
+        AsyncImage(
+            model = product.imageUrl,
             contentDescription = product.title,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
 
-        // Gradiente oscuro desde abajo
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -436,32 +364,16 @@ fun PagerCard(product: FeedProduct, onClick: () -> Unit = {}) {
                 )
         )
 
-        // Info superpuesta abajo
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(HoloSpacing.md)
         ) {
-            Text(
-                text = product.subtitle,
-                style = HoloType.BodySmall,
-                color = HoloColors.TextOnDarkMuted
-            )
-            Text(
-                text = product.title,
-                style = HoloType.HeadlineMedium,
-                color = HoloColors.TextOnDark
-            )
-
+            Text(text = product.subtitle, style = HoloType.BodySmall, color = HoloColors.TextOnDarkMuted)
+            Text(text = product.title, style = HoloType.HeadlineMedium, color = HoloColors.TextOnDark)
             Spacer(Modifier.height(HoloSpacing.xs))
-
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Precio en rojo Pulse (antes era dorado)
-                Text(
-                    text = product.price,
-                    style = HoloType.HeadlineSmall,
-                    color = HoloColors.Pulse
-                )
+                Text(text = product.price, style = HoloType.HeadlineSmall, color = HoloColors.Pulse)
                 Spacer(Modifier.weight(1f))
                 Icon(
                     imageVector = Icons.Outlined.Share,
@@ -474,64 +386,42 @@ fun PagerCard(product: FeedProduct, onClick: () -> Unit = {}) {
     }
 }
 
-/**
- * MainProductCard — Card de producto destacado a ancho completo.
- *
- * Muestra subtítulo, título, imagen grande (300dp), precio y enlace "Comprar".
- * Se usa entre secciones para romper el ritmo del scroll.
- */
+// MainProductCard ahora usa ProductDetail + AsyncImage
 @Composable
-fun MainProductCard(product: FeedProduct, onClick: () -> Unit = {}) {
+fun MainProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(HoloSpacing.md)
             .clickable { onClick() }
     ) {
-        // Subtítulo gris
+        Text(text = product.subtitle, style = HoloType.TitleSmall, color = HoloColors.TextTertiary)
         Text(
-            text = product.subtitle,
-            style = HoloType.TitleSmall,
-            color = HoloColors.TextTertiary
-        )
-
-        // Título en negro
-        Text(
-            text = product.title.replace("\n", " "),
+            text = product.title,
             style = HoloType.HeadlineMedium,
             color = HoloColors.TextPrimary,
             modifier = Modifier.padding(top = HoloSpacing.xxs)
         )
-
         Spacer(Modifier.height(HoloSpacing.sm))
-
-        // Imagen del producto
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(300.dp)
                 .clip(RoundedCornerShape(HoloSpacing.RadiusLg))
         ) {
-            Image(
-                painter = painterResource(id = product.imageRes),
+            AsyncImage(
+                model = product.imageUrl,
                 contentDescription = product.title,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
         }
-
         Spacer(Modifier.height(HoloSpacing.sm))
-
-        // Precio + enlace "Comprar"
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = product.price,
-                style = HoloType.TitleLarge,
-                color = HoloColors.TextPrimary
-            )
+            Text(text = product.price, style = HoloType.TitleLarge, color = HoloColors.TextPrimary)
             Text(
                 text = "Comprar",
                 style = HoloType.TitleMedium,
@@ -542,12 +432,6 @@ fun MainProductCard(product: FeedProduct, onClick: () -> Unit = {}) {
     }
 }
 
-/**
- * DarkSection — Sección con fondo negro para productos exclusivos.
- *
- * Header con título blanco + "Ver todo" en rojo Pulse.
- * Carrusel horizontal de DarkProductCards.
- */
 @Composable
 fun DarkSection(
     title: String,
@@ -562,7 +446,6 @@ fun DarkSection(
             .background(HoloColors.Ink)
             .padding(vertical = HoloSpacing.xl)
     ) {
-        // Header de la sección
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -571,11 +454,7 @@ fun DarkSection(
             verticalAlignment = Alignment.Bottom
         ) {
             Column {
-                Text(
-                    text = title,
-                    style = HoloType.HeadlineSmall,
-                    color = HoloColors.TextOnDark
-                )
+                Text(text = title, style = HoloType.HeadlineSmall, color = HoloColors.TextOnDark)
                 Text(
                     text = subtitle,
                     style = HoloType.BodySmall,
@@ -583,7 +462,6 @@ fun DarkSection(
                     modifier = Modifier.padding(top = HoloSpacing.xxs)
                 )
             }
-            // "Ver todo" en rojo Pulse (antes dorado)
             Text(
                 text = "Ver todo",
                 style = HoloType.TitleSmall,
@@ -591,10 +469,7 @@ fun DarkSection(
                 modifier = Modifier.clickable { onSeeAllClick() }
             )
         }
-
         Spacer(Modifier.height(HoloSpacing.md))
-
-        // Carrusel horizontal de cards oscuras
         LazyRow(
             contentPadding = PaddingValues(horizontal = HoloSpacing.md),
             horizontalArrangement = Arrangement.spacedBy(HoloSpacing.sm)
@@ -606,16 +481,10 @@ fun DarkSection(
     }
 }
 
-/**
- * DarkProductCard — Card de producto sobre fondo negro.
- *
- * Imagen con botón de favorito, título blanco, precio en rojo Pulse.
- */
 @Composable
 fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
-    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
+    val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
     val isFav = favoriteIds.contains(product.id)
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     Column(
@@ -623,7 +492,6 @@ fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
             .width(170.dp)
             .clickable { onClick() }
     ) {
-        // Imagen con botón favorito superpuesto
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -631,18 +499,16 @@ fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                 .clip(RoundedCornerShape(HoloSpacing.RadiusMd))
                 .background(HoloColors.Neutral800)
         ) {
-            Image(
-                painter = painterResource(id = product.imageRes),
+            AsyncImage(
+                model = product.imageUrl,
                 contentDescription = product.title,
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(HoloSpacing.RadiusMd)),
                 contentScale = ContentScale.Crop
             )
-
-            // Botón favorito (corazón)
             IconButton(
-                onClick = { scope.launch { FavoritesManager.toggleFavorite(context, product.id) } },
+                onClick = { scope.launch { WishlistRepository.toggleFavorite(product.id, product.priceRaw) } },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(HoloSpacing.xxs)
@@ -656,10 +522,7 @@ fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                 )
             }
         }
-
         Spacer(Modifier.height(HoloSpacing.xs))
-
-        // Título blanco
         Text(
             text = product.title,
             style = HoloType.TitleSmall,
@@ -667,8 +530,6 @@ fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-
-        // Precio en rojo Pulse
         Text(
             text = product.price,
             style = HoloType.TitleMedium,
@@ -678,11 +539,6 @@ fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
     }
 }
 
-/**
- * GraySection — Sección con fondo gris claro (Fog) para productos en oferta.
- *
- * Título grande negro, "Ver todo" a la derecha, carrusel de SmallProductCards.
- */
 @Composable
 fun GraySection(
     title: String,
@@ -718,9 +574,7 @@ fun GraySection(
                     .padding(start = HoloSpacing.md, bottom = HoloSpacing.xxs)
             )
         }
-
         Spacer(Modifier.height(HoloSpacing.md))
-
         LazyRow(
             contentPadding = PaddingValues(horizontal = HoloSpacing.md),
             horizontalArrangement = Arrangement.spacedBy(HoloSpacing.sm)
@@ -732,16 +586,10 @@ fun GraySection(
     }
 }
 
-/**
- * SmallProductCard — Card compacta para carruseles sobre fondo claro.
- *
- * Imagen con favorito, título negro, subtítulo gris, precio negro.
- */
 @Composable
 fun SmallProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
-    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
+    val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
     val isFav = favoriteIds.contains(product.id)
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     Column(
@@ -756,8 +604,8 @@ fun SmallProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                 .clip(RoundedCornerShape(HoloSpacing.RadiusMd))
                 .background(HoloColors.Paper)
         ) {
-            Image(
-                painter = painterResource(id = product.imageRes),
+            AsyncImage(
+                model = product.imageUrl,
                 contentDescription = product.title,
                 modifier = Modifier
                     .fillMaxSize()
@@ -765,7 +613,7 @@ fun SmallProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                 contentScale = ContentScale.Crop
             )
             IconButton(
-                onClick = { scope.launch { FavoritesManager.toggleFavorite(context, product.id) } },
+                onClick = { scope.launch { WishlistRepository.toggleFavorite(product.id, product.priceRaw) } },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(HoloSpacing.xxs)
@@ -779,9 +627,7 @@ fun SmallProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                 )
             }
         }
-
         Spacer(Modifier.height(HoloSpacing.xs))
-
         Text(
             text = product.title,
             style = HoloType.TitleSmall,
@@ -806,11 +652,6 @@ fun SmallProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
     }
 }
 
-/**
- * PromoBanner — Bloque negro con CTA a la pantalla Upcoming.
- *
- * Label rojo "PRÓXIMOS DROPS", título blanco, botón outlined rojo.
- */
 @Composable
 fun PromoBanner(onExploreClick: () -> Unit) {
     Box(
@@ -822,24 +663,14 @@ fun PromoBanner(onExploreClick: () -> Unit) {
             .padding(HoloSpacing.xl)
     ) {
         Column {
-            // Label rojo — "PRÓXIMOS DROPS"
-            Text(
-                text = "PRÓXIMOS DROPS",
-                style = HoloType.LabelMedium,
-                color = HoloColors.Pulse
-            )
-
+            Text(text = "PROXIMOS DROPS", style = HoloType.LabelMedium, color = HoloColors.Pulse)
             Spacer(Modifier.height(HoloSpacing.xs))
-
             Text(
                 text = "No te pierdas\nlos lanzamientos",
                 style = HoloType.HeadlineLarge,
                 color = HoloColors.TextOnDark
             )
-
             Spacer(Modifier.height(HoloSpacing.md))
-
-            // Botón outlined con borde rojo Pulse
             OutlinedButton(
                 onClick = onExploreClick,
                 shape = RoundedCornerShape(HoloSpacing.RadiusPill),
@@ -847,19 +678,12 @@ fun PromoBanner(onExploreClick: () -> Unit) {
                     brush = Brush.linearGradient(listOf(HoloColors.Pulse, HoloColors.Pulse))
                 )
             ) {
-                Text(
-                    text = "EXPLORAR",
-                    style = HoloType.LabelLarge,
-                    color = HoloColors.Pulse
-                )
+                Text(text = "EXPLORAR", style = HoloType.LabelLarge, color = HoloColors.Pulse)
             }
         }
     }
 }
 
-/**
- * TrendingSection — Sección "En Tendencia" con cards que muestran rating.
- */
 @Composable
 fun TrendingSection(
     products: List<ProductDetail>,
@@ -871,14 +695,8 @@ fun TrendingSection(
             .fillMaxWidth()
             .padding(vertical = HoloSpacing.md)
     ) {
-        SectionHeader(
-            title = "EN TENDENCIA",
-            actionText = "Ver todo",
-            onAction = onSeeAllClick
-        )
-
+        SectionHeader(title = "EN TENDENCIA", actionText = "Ver todo", onAction = onSeeAllClick)
         Spacer(Modifier.height(HoloSpacing.sm))
-
         LazyRow(
             contentPadding = PaddingValues(horizontal = HoloSpacing.md),
             horizontalArrangement = Arrangement.spacedBy(HoloSpacing.sm)
@@ -890,17 +708,10 @@ fun TrendingSection(
     }
 }
 
-/**
- * TrendingCard — Card de producto con badge de rating y contador de reseñas.
- *
- * Más grande que SmallProductCard (220dp ancho, 240dp imagen).
- * Badge negro con rating en amarillo arriba-izquierda.
- */
 @Composable
 fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
-    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
+    val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
     val isFav = favoriteIds.contains(product.id)
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     Card(
@@ -912,22 +723,19 @@ fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
         colors = CardDefaults.cardColors(containerColor = HoloColors.Fog)
     ) {
         Column {
-            // Imagen con badge de rating y favorito
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(240.dp)
             ) {
-                Image(
-                    painter = painterResource(id = product.imageRes),
+                AsyncImage(
+                    model = product.imageUrl,
                     contentDescription = product.title,
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(topStart = HoloSpacing.RadiusLg, topEnd = HoloSpacing.RadiusLg)),
                     contentScale = ContentScale.Crop
                 )
-
-                // Badge de rating (arriba-izquierda)
                 Box(
                     modifier = Modifier
                         .padding(HoloSpacing.xs)
@@ -936,16 +744,10 @@ fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
                         .background(HoloColors.InkOverlay80)
                         .padding(horizontal = HoloSpacing.xs, vertical = HoloSpacing.xxs)
                 ) {
-                    Text(
-                        text = "${product.rating}",
-                        style = HoloType.LabelSmall,
-                        color = HoloColors.Warning     // Amarillo para estrellas
-                    )
+                    Text(text = "${product.rating}", style = HoloType.LabelSmall, color = HoloColors.Warning)
                 }
-
-                // Botón favorito (arriba-derecha)
                 IconButton(
-                    onClick = { scope.launch { FavoritesManager.toggleFavorite(context, product.id) } },
+                    onClick = { scope.launch { WishlistRepository.toggleFavorite(product.id, product.priceRaw) } },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(HoloSpacing.xxs)
@@ -959,18 +761,9 @@ fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
                     )
                 }
             }
-
-            // Info del producto debajo de la imagen
             Column(modifier = Modifier.padding(HoloSpacing.sm)) {
-                // Marca en label style
-                Text(
-                    text = product.brand,
-                    style = HoloType.LabelSmall,
-                    color = HoloColors.TextTertiary
-                )
-
+                Text(text = product.brand, style = HoloType.LabelSmall, color = HoloColors.TextTertiary)
                 Spacer(Modifier.height(HoloSpacing.xxs))
-
                 Text(
                     text = product.title,
                     style = HoloType.TitleMedium,
@@ -986,22 +779,15 @@ fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = 2.dp)
                 )
-
                 Spacer(Modifier.height(HoloSpacing.xs))
-
-                // Precio + nº de reseñas
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Text(text = product.price, style = HoloType.TitleLarge, color = HoloColors.TextPrimary)
                     Text(
-                        text = product.price,
-                        style = HoloType.TitleLarge,
-                        color = HoloColors.TextPrimary
-                    )
-                    Text(
-                        text = "${product.reviewCount} reseñas",
+                        text = "${product.reviewCount} resenas",
                         style = HoloType.BodySmall,
                         color = HoloColors.TextTertiary
                     )
@@ -1011,11 +797,6 @@ fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
     }
 }
 
-/**
- * FinalBanner — Banner de cierre con CTA al catálogo completo.
- *
- * Gradiente oscuro horizontal, label rojo, título blanco, flecha.
- */
 @Composable
 fun FinalBanner(onClick: () -> Unit) {
     Box(
@@ -1032,30 +813,16 @@ fun FinalBanner(onClick: () -> Unit) {
             .padding(HoloSpacing.xl)
     ) {
         Column {
-            // Label rojo — "HOLOCREW"
-            Text(
-                text = "HOLOCREW",
-                style = HoloType.LabelMedium,
-                color = HoloColors.Pulse
-            )
-
+            Text(text = "HOLOCREW", style = HoloType.LabelMedium, color = HoloColors.Pulse)
             Spacer(Modifier.height(HoloSpacing.xs))
-
             Text(
-                text = "Descubre toda\nla colección",
+                text = "Descubre toda\nla coleccion",
                 style = HoloType.HeadlineLarge,
                 color = HoloColors.TextOnDark
             )
-
             Spacer(Modifier.height(HoloSpacing.md))
-
-            // Flecha de acción
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "Ver catálogo",
-                    style = HoloType.TitleMedium,
-                    color = HoloColors.TextOnDark
-                )
+                Text(text = "Ver catalogo", style = HoloType.TitleMedium, color = HoloColors.TextOnDark)
                 Spacer(Modifier.width(HoloSpacing.xs))
                 Icon(
                     imageVector = Icons.Filled.ArrowForward,

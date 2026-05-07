@@ -1,6 +1,5 @@
 package com.example.holocrew.ui.product
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,43 +23,57 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
-import com.example.holocrew.data.CartManager
-import com.example.holocrew.data.FavoritesManager
+import coil.compose.AsyncImage
+import com.example.holocrew.data.network.CartRepository
+import com.example.holocrew.data.network.ProductRepository
+import com.example.holocrew.data.network.WishlistRepository
 import com.example.holocrew.theme.HoloColors
 import com.example.holocrew.theme.HoloSpacing
 import com.example.holocrew.theme.HoloType
 import kotlinx.coroutines.launch
+import androidx.navigation.NavController
 
-/**
- * ProductDetailScreen — Pantalla de detalle de producto.
- *
- * El "momento drop" de la app. Estilo SNKRS:
- *  - Imagen hero grande (420dp) con gradiente blanco inferior
- *  - Badge "OFERTA" en rojo Pulse si hay precio original
- *  - Info del producto: marca, título, precio, rating con estrellas
- *  - Dos CTAs: "COMPRAR AHORA" (negro pill) y "AÑADIR A LA CESTA" (outlined 2dp)
- *  - BottomSheet para selección de talla antes de añadir
- *  - Card de info de envío (gratis >150€, devolución, autenticidad)
- *  - Descripción + features con bullets
- *  - Carrusel "También te puede gustar" con productos relacionados
- *
- * @param navController Controlador de navegación.
- * @param productId UUID del producto (String) — viene de la ruta de navegación.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductDetailScreen(navController: NavController, productId: String) {
+fun ProductDetailScreen(navController: NavController, productId: Int) {
 
-    // ── Buscar producto en los datos mock por UUID ────────────────────────────
-    val product = remember(productId) { mockProducts.find { it.id == productId } }
+    // Estado del producto cargado desde Supabase
+    var product by remember { mutableStateOf<ProductDetail?>(null) }
+    var relatedProducts by remember { mutableStateOf<List<ProductDetail>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    // Estado de error: producto no encontrado
+    val scope = rememberCoroutineScope()
+    val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    var showSizeSheet by remember { mutableStateOf(false) }
+    var sizeSheetAction by remember { mutableStateOf("cart") }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Cargar producto desde Supabase
+    LaunchedEffect(productId) {
+        isLoading = true
+        product = ProductRepository.getById(productId)
+        product?.let { p ->
+            if (p.categoryId != null) {
+                relatedProducts = ProductRepository.getRelated(p.id, p.categoryId, 4)
+            }
+        }
+        isLoading = false
+    }
+
+    // Estado de carga
+    if (isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = HoloColors.Ink)
+        }
+        return
+    }
+
+    // Producto no encontrado
     if (product == null) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -78,34 +91,12 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
         return
     }
 
-    // ── Estado y dependencias ─────────────────────────────────────────────────
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val favoriteIds by FavoritesManager.favoriteIds.collectAsState()
-    val isFavorite = favoriteIds.contains(product.id)
-    val snackbarHostState = remember { SnackbarHostState() }
+    val p = product!!
+    val isFavorite = favoriteIds.contains(p.id)
+    val sizeRange = if (p.sizes.size > 1) "${p.sizes.first()} - ${p.sizes.last()}" else p.sizes.firstOrNull() ?: ""
 
-    // Control del BottomSheet de tallas
-    var showSizeSheet by remember { mutableStateOf(false) }
-    var sizeSheetAction by remember { mutableStateOf("cart") }  // "cart" o "buy"
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // Productos relacionados (misma categoría, excluyendo el actual)
-    val relatedProducts = remember {
-        mockProducts.filter { it.category == product.category && it.id != product.id }.take(4)
-    }
-
-    // Rango de tallas para mostrar ("XS – XXL" o "Único")
-    val sizeRange = if (product.sizes.size > 1)
-        "${product.sizes.first()} – ${product.sizes.last()}"
-    else
-        product.sizes.firstOrNull() ?: ""
-
-    // ══════════════════════════════════════════════════════════════════════════
-    // BOTTOM SHEET — Selección de talla
-    // Se muestra antes de añadir al carrito o comprar.
-    // ══════════════════════════════════════════════════════════════════════════
-    if (showSizeSheet && product.sizes.isNotEmpty()) {
+    // BottomSheet de tallas
+    if (showSizeSheet && p.sizes.isNotEmpty()) {
         ModalBottomSheet(
             onDismissRequest = { showSizeSheet = false },
             sheetState = sheetState,
@@ -113,15 +104,19 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
             shape = RoundedCornerShape(topStart = HoloSpacing.RadiusXl, topEnd = HoloSpacing.RadiusXl)
         ) {
             SizeSelectionSheet(
-                sizes = product.sizes,
+                sizes = p.sizes,
                 onSizeSelected = { selectedSize ->
                     showSizeSheet = false
                     scope.launch {
-                        CartManager.addItem(context, product.id)
+                        CartRepository.addItem(
+                            productId = p.id,
+                            price = p.priceRaw,
+                            size = selectedSize
+                        )
                         if (sizeSheetAction == "buy") {
                             navController.navigate("cart") { launchSingleTop = true }
                         } else {
-                            snackbarHostState.showSnackbar("${product.title} ($selectedSize) añadido al carrito")
+                            snackbarHostState.showSnackbar("${p.title} ($selectedSize) agregado al carrito")
                         }
                     }
                 }
@@ -129,9 +124,6 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
         }
     }
 
-    // ══════════════════════════════════════════════════════════════════════════
-    // SCAFFOLD — TopBar transparente + contenido scrolleable
-    // ══════════════════════════════════════════════════════════════════════════
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -147,9 +139,8 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                     }
                 },
                 actions = {
-                    // Botón favorito — corazón rojo Pulse si activo
                     IconButton(onClick = {
-                        scope.launch { FavoritesManager.toggleFavorite(context, product.id) }
+                        scope.launch { WishlistRepository.toggleFavorite(p.id, p.priceRaw) }
                     }) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
@@ -157,7 +148,6 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                             tint = if (isFavorite) HoloColors.Pulse else HoloColors.Ink
                         )
                     }
-                    // Botón compartir
                     IconButton(onClick = {}) {
                         Icon(Icons.Filled.Share, "Compartir", tint = HoloColors.Ink)
                     }
@@ -174,24 +164,19 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                 .background(HoloColors.Paper)
         ) {
 
-            // ══════════════════════════════════════════════════════════════════
-            // IMAGEN HERO — 420dp con gradiente blanco inferior
-            // ══════════════════════════════════════════════════════════════════
+            // IMAGEN HERO
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(420.dp)
                 ) {
-                    // Imagen del producto
-                    Image(
-                        painter = painterResource(id = product.imageRes),
-                        contentDescription = product.title,
+                    AsyncImage(
+                        model = p.imageUrl,
+                        contentDescription = p.title,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
-
-                    // Gradiente blanco inferior (transición suave a la info)
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -203,9 +188,7 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                                 )
                             )
                     )
-
-                    // Badge "OFERTA" en rojo si tiene precio original
-                    if (product.originalPrice != null) {
+                    if (p.originalPrice != null) {
                         Box(
                             modifier = Modifier
                                 .padding(HoloSpacing.md)
@@ -214,63 +197,39 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                                 .background(HoloColors.Pulse)
                                 .padding(horizontal = HoloSpacing.sm, vertical = HoloSpacing.xxs)
                         ) {
-                            Text(
-                                text = "OFERTA",
-                                style = HoloType.LabelSmall,
-                                color = HoloColors.Paper
-                            )
+                            Text(text = "OFERTA", style = HoloType.LabelSmall, color = HoloColors.Paper)
                         }
                     }
                 }
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // INFO DEL PRODUCTO — marca, título, precio, rating, CTAs
-            // ══════════════════════════════════════════════════════════════════
+            // INFO DEL PRODUCTO
             item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = HoloSpacing.md)
                 ) {
-                    // Marca en label style
-                    Text(
-                        text = product.brand,
-                        style = HoloType.LabelMedium,
-                        color = HoloColors.TextTertiary
-                    )
-
+                    Text(text = p.brand, style = HoloType.LabelMedium, color = HoloColors.TextTertiary)
                     Spacer(Modifier.height(HoloSpacing.xxs))
 
-                    // Título + precio lado a lado
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Top
                     ) {
-                        // Columna izquierda: título y subtítulo
                         Column(modifier = Modifier.weight(1f)) {
+                            Text(text = p.title, style = HoloType.HeadlineLarge, color = HoloColors.TextPrimary)
                             Text(
-                                text = product.title,
-                                style = HoloType.HeadlineLarge,
-                                color = HoloColors.TextPrimary
-                            )
-                            Text(
-                                text = product.subtitle,
+                                text = p.subtitle,
                                 style = HoloType.BodyMedium,
                                 color = HoloColors.TextSecondary,
                                 modifier = Modifier.padding(top = 2.dp)
                             )
                         }
-
-                        // Columna derecha: precio actual + precio original tachado
                         Column(horizontalAlignment = Alignment.End) {
-                            Text(
-                                text = product.price,
-                                style = HoloType.HeadlineLarge,
-                                color = HoloColors.TextPrimary
-                            )
-                            product.originalPrice?.let {
+                            Text(text = p.price, style = HoloType.HeadlineLarge, color = HoloColors.TextPrimary)
+                            p.originalPrice?.let {
                                 Text(
                                     text = it,
                                     style = HoloType.BodyMedium,
@@ -281,40 +240,28 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                         }
                     }
 
-                    // Rango de tallas disponibles
                     if (sizeRange.isNotEmpty()) {
                         Spacer(Modifier.height(HoloSpacing.xs))
-                        Text(
-                            text = sizeRange,
-                            style = HoloType.BodyMedium,
-                            color = HoloColors.TextSecondary
-                        )
+                        Text(text = sizeRange, style = HoloType.BodyMedium, color = HoloColors.TextSecondary)
                     }
 
                     Spacer(Modifier.height(HoloSpacing.sm))
 
-                    // ── Rating con estrellas ──────────────────────────────────
+                    // Rating
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         repeat(5) { index ->
                             Icon(
                                 imageVector = Icons.Filled.Star,
                                 contentDescription = "Estrella",
-                                tint = if (index < product.rating.toInt())
-                                    HoloColors.Warning    // Amarillo para estrellas activas
-                                else
-                                    HoloColors.Neutral200, // Gris para inactivas
+                                tint = if (index < p.rating.toInt()) HoloColors.Warning else HoloColors.Neutral200,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
                         Spacer(Modifier.width(HoloSpacing.xs))
-                        Text(
-                            text = "${product.rating}",
-                            style = HoloType.TitleMedium,
-                            color = HoloColors.TextPrimary
-                        )
+                        Text(text = "${p.rating}", style = HoloType.TitleMedium, color = HoloColors.TextPrimary)
                         Spacer(Modifier.width(HoloSpacing.xxs))
                         Text(
-                            text = "(${product.reviewCount} reseñas)",
+                            text = "(${p.reviewCount} resenas)",
                             style = HoloType.BodyMedium,
                             color = HoloColors.TextTertiary
                         )
@@ -322,19 +269,15 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
 
                     Spacer(Modifier.height(HoloSpacing.lg))
 
-                    // ══════════════════════════════════════════════════════════
-                    // CTAs — Comprar ahora (negro pill) + Añadir a cesta (outlined)
-                    // ══════════════════════════════════════════════════════════
-
-                    // Botón primario: COMPRAR AHORA
+                    // CTAs
                     Button(
                         onClick = {
-                            if (product.sizes.isNotEmpty()) {
+                            if (p.sizes.isNotEmpty()) {
                                 sizeSheetAction = "buy"
                                 showSizeSheet = true
                             } else {
                                 scope.launch {
-                                    CartManager.addItem(context, product.id)
+                                    CartRepository.addItem(productId = p.id, price = p.priceRaw)
                                     navController.navigate("cart") { launchSingleTop = true }
                                 }
                             }
@@ -345,25 +288,20 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                         shape = RoundedCornerShape(HoloSpacing.RadiusPill),
                         colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Ink)
                     ) {
-                        Text(
-                            text = "COMPRAR AHORA",
-                            style = HoloType.LabelLarge,
-                            color = HoloColors.Paper
-                        )
+                        Text(text = "COMPRAR AHORA", style = HoloType.LabelLarge, color = HoloColors.Paper)
                     }
 
                     Spacer(Modifier.height(HoloSpacing.xs))
 
-                    // Botón secundario: AÑADIR A LA CESTA (borde 2dp)
                     OutlinedButton(
                         onClick = {
-                            if (product.sizes.isNotEmpty()) {
+                            if (p.sizes.isNotEmpty()) {
                                 sizeSheetAction = "cart"
                                 showSizeSheet = true
                             } else {
                                 scope.launch {
-                                    CartManager.addItem(context, product.id)
-                                    snackbarHostState.showSnackbar("${product.title} añadido al carrito")
+                                    CartRepository.addItem(productId = p.id, price = p.priceRaw)
+                                    snackbarHostState.showSnackbar("${p.title} agregado al carrito")
                                 }
                             }
                         },
@@ -371,48 +309,33 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                             .fillMaxWidth()
                             .height(HoloSpacing.ButtonHeight),
                         shape = RoundedCornerShape(HoloSpacing.RadiusPill),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(
-                            width = HoloSpacing.BorderDefault
-                        )
+                        border = ButtonDefaults.outlinedButtonBorder.copy(width = HoloSpacing.BorderDefault)
                     ) {
-                        Text(
-                            text = "AÑADIR A LA CESTA",
-                            style = HoloType.LabelLarge,
-                            color = HoloColors.TextPrimary
-                        )
+                        Text(text = "AGREGAR A LA CESTA", style = HoloType.LabelLarge, color = HoloColors.TextPrimary)
                     }
 
                     Spacer(Modifier.height(HoloSpacing.xl))
                     Divider(color = HoloColors.Neutral100)
                     Spacer(Modifier.height(HoloSpacing.xl))
 
-                    // ══════════════════════════════════════════════════════════
-                    // INFO DE ENVÍO — card gris con 3 filas
-                    // ══════════════════════════════════════════════════════════
                     ShippingInfoCard()
 
                     Spacer(Modifier.height(HoloSpacing.xl))
                     Divider(color = HoloColors.Neutral100)
                     Spacer(Modifier.height(HoloSpacing.xl))
 
-                    // ══════════════════════════════════════════════════════════
-                    // DESCRIPCIÓN + FEATURES
-                    // ══════════════════════════════════════════════════════════
-                    Text(
-                        text = product.description,
-                        style = HoloType.BodyLarge,
-                        color = HoloColors.TextSecondary
-                    )
+                    // Descripcion
+                    if (p.description.isNotEmpty()) {
+                        Text(text = p.description, style = HoloType.BodyLarge, color = HoloColors.TextSecondary)
+                        Spacer(Modifier.height(HoloSpacing.lg))
+                    }
 
-                    Spacer(Modifier.height(HoloSpacing.lg))
-
-                    // Lista de features con bullets negros
-                    product.features.forEach { feature ->
+                    // Features
+                    p.features.forEach { feature ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.padding(bottom = HoloSpacing.xs)
                         ) {
-                            // Bullet negro
                             Box(
                                 modifier = Modifier
                                     .size(6.dp)
@@ -420,11 +343,7 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                                     .background(HoloColors.Ink)
                             )
                             Spacer(Modifier.width(HoloSpacing.sm))
-                            Text(
-                                text = feature,
-                                style = HoloType.BodyMedium,
-                                color = HoloColors.Neutral600
-                            )
+                            Text(text = feature, style = HoloType.BodyMedium, color = HoloColors.Neutral600)
                         }
                     }
 
@@ -432,20 +351,16 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
                 }
             }
 
-            // ══════════════════════════════════════════════════════════════════
-            // PRODUCTOS RELACIONADOS — carrusel horizontal
-            // ══════════════════════════════════════════════════════════════════
+            // PRODUCTOS RELACIONADOS
             if (relatedProducts.isNotEmpty()) {
                 item {
                     Text(
-                        text = "TAMBIÉN TE PUEDE GUSTAR",
+                        text = "TAMBIEN TE PUEDE GUSTAR",
                         style = HoloType.LabelLarge,
                         color = HoloColors.TextPrimary,
                         modifier = Modifier.padding(horizontal = HoloSpacing.md)
                     )
-
                     Spacer(Modifier.height(HoloSpacing.sm))
-
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = HoloSpacing.md),
                         horizontalArrangement = Arrangement.spacedBy(HoloSpacing.sm)
@@ -470,15 +385,9 @@ fun ProductDetailScreen(navController: NavController, productId: String) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// COMPONENTES DEL DETALLE
+// COMPONENTES
 // ══════════════════════════════════════════════════════════════════════════════
 
-/**
- * SizeSelectionSheet — BottomSheet con grid de tallas.
- *
- * Grid de 3 columnas. Talla seleccionada = fondo negro + texto blanco.
- * Botón "AÑADIR A LA CESTA" se activa solo cuando hay talla seleccionada.
- */
 @Composable
 fun SizeSelectionSheet(sizes: List<String>, onSizeSelected: (String) -> Unit) {
     var selectedIndex by remember { mutableIntStateOf(-1) }
@@ -488,15 +397,9 @@ fun SizeSelectionSheet(sizes: List<String>, onSizeSelected: (String) -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = HoloSpacing.lg, vertical = HoloSpacing.md)
     ) {
-        Text(
-            text = "Selecciona una talla",
-            style = HoloType.HeadlineMedium,
-            color = HoloColors.TextPrimary
-        )
-
+        Text(text = "Selecciona una talla", style = HoloType.HeadlineMedium, color = HoloColors.TextPrimary)
         Spacer(Modifier.height(HoloSpacing.lg))
 
-        // Grid 3 columnas de tallas
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             horizontalArrangement = Arrangement.spacedBy(HoloSpacing.xs),
@@ -505,7 +408,6 @@ fun SizeSelectionSheet(sizes: List<String>, onSizeSelected: (String) -> Unit) {
         ) {
             items(sizes) { size ->
                 val isSelected = sizes.indexOf(size) == selectedIndex
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -533,7 +435,6 @@ fun SizeSelectionSheet(sizes: List<String>, onSizeSelected: (String) -> Unit) {
 
         Spacer(Modifier.height(HoloSpacing.xl))
 
-        // Botón confirmar — deshabilitado si no hay talla seleccionada
         Button(
             onClick = { if (selectedIndex >= 0) onSizeSelected(sizes[selectedIndex]) },
             modifier = Modifier
@@ -547,7 +448,7 @@ fun SizeSelectionSheet(sizes: List<String>, onSizeSelected: (String) -> Unit) {
             enabled = selectedIndex >= 0
         ) {
             Text(
-                text = "AÑADIR A LA CESTA",
+                text = "AGREGAR A LA CESTA",
                 style = HoloType.LabelLarge,
                 color = if (selectedIndex >= 0) HoloColors.Paper else HoloColors.TextTertiary
             )
@@ -557,9 +458,6 @@ fun SizeSelectionSheet(sizes: List<String>, onSizeSelected: (String) -> Unit) {
     }
 }
 
-/**
- * ShippingInfoCard — Card gris con info de envío, devolución y autenticidad.
- */
 @Composable
 fun ShippingInfoCard() {
     Card(
@@ -569,27 +467,19 @@ fun ShippingInfoCard() {
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(HoloSpacing.md)) {
-            ShippingRow(Icons.Filled.LocalShipping, "Envío gratis", "En pedidos superiores a 150€")
+            ShippingRow(Icons.Filled.LocalShipping, "Envio gratis", "En pedidos superiores a 150 EUR")
             Spacer(Modifier.height(HoloSpacing.sm))
-            ShippingRow(Icons.Filled.Loop, "Devolución gratuita", "30 días para devoluciones")
+            ShippingRow(Icons.Filled.Loop, "Devolucion gratuita", "30 dias para devoluciones")
             Spacer(Modifier.height(HoloSpacing.sm))
-            ShippingRow(Icons.Filled.Verified, "Producto original", "Garantía de autenticidad")
+            ShippingRow(Icons.Filled.Verified, "Producto original", "Garantia de autenticidad")
         }
     }
 }
 
-/**
- * ShippingRow — Fila individual dentro de ShippingInfoCard.
- */
 @Composable
 fun ShippingRow(icon: ImageVector, title: String, subtitle: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = HoloColors.Ink,
-            modifier = Modifier.size(HoloSpacing.IconSizeDefault)
-        )
+        Icon(imageVector = icon, contentDescription = null, tint = HoloColors.Ink, modifier = Modifier.size(HoloSpacing.IconSizeDefault))
         Spacer(Modifier.width(HoloSpacing.sm))
         Column {
             Text(text = title, style = HoloType.TitleMedium, color = HoloColors.TextPrimary)
@@ -598,9 +488,6 @@ fun ShippingRow(icon: ImageVector, title: String, subtitle: String) {
     }
 }
 
-/**
- * RelatedProductCard — Card compacta para el carrusel "También te puede gustar".
- */
 @Composable
 fun RelatedProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
     Column(
@@ -615,8 +502,8 @@ fun RelatedProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                 .clip(RoundedCornerShape(HoloSpacing.RadiusMd))
                 .background(HoloColors.Fog)
         ) {
-            Image(
-                painter = painterResource(id = product.imageRes),
+            AsyncImage(
+                model = product.imageUrl,
                 contentDescription = product.title,
                 modifier = Modifier
                     .fillMaxSize()
@@ -624,9 +511,7 @@ fun RelatedProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                 contentScale = ContentScale.Crop
             )
         }
-
         Spacer(Modifier.height(HoloSpacing.xs))
-
         Text(
             text = product.title,
             style = HoloType.TitleSmall,

@@ -49,7 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.holocrew.data.CartManager
+import com.example.holocrew.data.network.CartRepository
 import com.example.holocrew.navigation.Screen
 import androidx.compose.material.icons.filled.GridView
 
@@ -69,7 +69,7 @@ fun BottomNavigationBar(
     val currentRoute = currentBackStackEntry?.destination?.route
 
     // Observar el número de items en el carrito para el badge
-    val cartItems by CartManager.items.collectAsState()
+    val cartItems by CartRepository.cartItems.collectAsState()
     val cartItemCount = cartItems.sumOf { it.quantity }
 
     // Definir los items de navegación (izquierda y derecha del carrito)
