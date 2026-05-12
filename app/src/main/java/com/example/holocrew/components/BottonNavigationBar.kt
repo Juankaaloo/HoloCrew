@@ -53,6 +53,7 @@ import com.example.holocrew.data.network.CartRepository
 import com.example.holocrew.navigation.Screen
 import androidx.compose.material.icons.filled.GridView
 
+
 /**
  * Barra de navegación inferior con diseño de píldora flotante.
  *
@@ -75,11 +76,11 @@ fun BottomNavigationBar(
     // Definir los items de navegación (izquierda y derecha del carrito)
     val leftItems = listOf(
         NavItem(screen = Screen.Home, icon = Icons.Filled.Home, label = "Home"),
-        NavItem(screen = Screen.Available, icon = Icons.Filled.GridView, label = "Explore")
+        NavItem(screen = Screen.Available, icon = Icons.Filled.GridView, label = "Shop")
     )
     val rightItems = listOf(
         NavItem(screen = Screen.Upcoming, icon = Icons.Filled.Bolt, label = "Drops"),
-        NavItem(screen = Screen.Profile, icon = Icons.Filled.Person, label = "Profile")
+        NavItem(screen = Screen.Profile, icon = Icons.Filled.Person, label = "Perfil")
     )
 
     Box(
@@ -108,43 +109,47 @@ fun BottomNavigationBar(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp),
+                    .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                // ── Items izquierdos (Home, Explore) ──
+                // Items izquierdos
                 leftItems.forEach { item ->
-                    NavBarItem(
-                        item = item,
-                        isSelected = currentRoute == item.screen.route,
-                        onClick = {
-                            if (currentRoute != item.screen.route) {
-                                navController.navigate(item.screen.route) {
-                                    launchSingleTop = true
-                                    restoreState = true
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        NavBarItem(
+                            item = item,
+                            isSelected = currentRoute == item.screen.route,
+                            onClick = {
+                                if (currentRoute != item.screen.route) {
+                                    navController.navigate(item.screen.route) {
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
 
-                // Espacio central para el botón flotante del carrito
-                Spacer(modifier = Modifier.width(72.dp))
+                // Espacio central para el carrito (proporcional)
+                Spacer(modifier = Modifier.weight(1.2f))
 
-                // ── Items derechos (Drops, Profile) ──
+                // Items derechos
                 rightItems.forEach { item ->
-                    NavBarItem(
-                        item = item,
-                        isSelected = currentRoute == item.screen.route,
-                        onClick = {
-                            if (currentRoute != item.screen.route) {
-                                navController.navigate(item.screen.route) {
-                                    launchSingleTop = true
-                                    restoreState = true
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        NavBarItem(
+                            item = item,
+                            isSelected = currentRoute == item.screen.route,
+                            onClick = {
+                                if (currentRoute != item.screen.route) {
+                                    navController.navigate(item.screen.route) {
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
                                 }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -237,9 +242,10 @@ private fun NavBarItem(
         )
         Text(
             text = item.label,
-            fontSize = 11.sp,
+            fontSize = 9.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = iconColor
+            color = iconColor,
+            maxLines = 1
         )
     }
 }

@@ -219,7 +219,7 @@ fun ProfileScreen(navController: NavController? = null) {
                 ) {
                     QuickAction(
                         icon = Icons.Outlined.ShoppingBag,
-                        label = "Mis Pedidos",
+                        label = "Pedidos",
                         modifier = Modifier.weight(1f),
                         onClick = { navController?.navigate("my_orders") { launchSingleTop = true } }
                     )

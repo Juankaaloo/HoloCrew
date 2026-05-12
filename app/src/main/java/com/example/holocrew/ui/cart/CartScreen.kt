@@ -69,7 +69,7 @@ fun CartScreen(navController: NavController) {
                     Text("Agrega productos para continuar", style = HoloType.BodyMedium, color = HoloColors.TextTertiary, modifier = Modifier.padding(top = HoloSpacing.xs))
                     Spacer(Modifier.height(HoloSpacing.xl))
                     Button(
-                        onClick = { navController.navigateUp() },
+                        onClick = { navController.navigate("available") { launchSingleTop = true } },
                         colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Ink),
                         shape = RoundedCornerShape(HoloSpacing.RadiusMd)
                     ) {

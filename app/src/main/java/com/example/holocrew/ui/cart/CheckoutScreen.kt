@@ -183,29 +183,57 @@ fun CheckoutScreen(navController: NavController) {
                         onClick = {
                             val addr = selectedAddress ?: return@Button
                             scope.launch {
-                                isPlacingOrder = true
                                 try {
                                     val userId = SupabaseClient.client.auth.currentUserOrNull()?.id ?: return@launch
                                     val orderNum = "HC-${System.currentTimeMillis().toString().takeLast(8)}"
-                                    SupabaseClient.client.from("orders").insert(buildJsonObject {
-                                        put("user_id", userId); put("order_number", orderNum)
-                                        put("status", "pending"); put("payment_status", "pending")
-                                        put("subtotal", subtotal); put("shipping_cost", shippingCost); put("total", total)
-                                        put("shipping_method", selectedShipping)
-                                        put("payment_method", selectedPayment?.paymentType ?: "credit_card")
-                                        put("shipping_address", buildJsonObject {
-                                            put("full_name", addr.fullName); put("street", addr.street)
-                                            put("city", addr.city); put("postal_code", addr.postalCode)
-                                            put("country_code", addr.countryCode)
-                                        })
-                                    })
+
+                                    // 1. Crear orden y obtener el ID de vuelta
+                                    val orderResult = SupabaseClient.client.from("orders")
+                                        .insert(buildJsonObject {
+                                            put("user_id", userId)
+                                            put("order_number", orderNum)
+                                            put("status", "pending")
+                                            put("payment_status", "pending")
+                                            put("subtotal", subtotal)
+                                            put("shipping_cost", shippingCost)
+                                            put("total", total)
+                                            put("shipping_method", selectedShipping)
+                                            put("payment_method", selectedPayment?.paymentType ?: "credit_card")
+                                            put("shipping_address", buildJsonObject {
+                                                put("full_name", addr.fullName)
+                                                put("street", addr.street)
+                                                put("city", addr.city)
+                                                put("postal_code", addr.postalCode)
+                                                put("country_code", addr.countryCode)
+                                            })
+                                        }) {
+                                            select()
+                                        }.decodeSingle<com.example.holocrew.data.network.SbOrderDto>()
+
+                                    // 2. Insertar cada item del carrito en order_items
+                                    cartItems.forEach { item ->
+                                        SupabaseClient.client.from("order_items")
+                                            .insert(buildJsonObject {
+                                                put("order_id", orderResult.id)
+                                                put("product_id", item.product.id)
+                                                put("product_name", item.product.title)
+                                                put("product_image_url", item.product.imageUrl)
+                                                put("size", item.size ?: "")
+                                                put("color", item.color ?: "default")
+                                                put("quantity", item.quantity)
+                                                put("unit_price", item.priceAtAdd)
+                                                put("total", item.priceAtAdd * item.quantity)
+                                            })
+                                    }
+
+                                    // 3. Limpiar carrito y mostrar exito
                                     CartRepository.clearCart()
-                                    orderNumber = orderNum; orderSuccess = true
+                                    orderNumber = orderNum
+                                    orderSuccess = true
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                     Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                                 }
-                                isPlacingOrder = false
                             }
                         },
                         modifier = Modifier.fillMaxWidth().height(HoloSpacing.ButtonHeight),

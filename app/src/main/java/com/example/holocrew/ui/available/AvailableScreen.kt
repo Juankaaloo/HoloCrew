@@ -166,9 +166,6 @@ fun FeaturedProductCard(product: ProductDetail, isFavorite: Boolean, onClick: ()
                 product.originalPrice?.let { Spacer(Modifier.width(8.dp)); Text(it, fontSize = 14.sp, color = Color.White.copy(alpha = 0.5f), textDecoration = TextDecoration.LineThrough) }
             }
         }
-        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(14.dp).size(42.dp).clip(CircleShape).background(Color.White).clickable { onAddToCart() }, contentAlignment = Alignment.Center) {
-            Icon(Icons.Filled.Add, "Agregar", tint = Color.Black, modifier = Modifier.size(22.dp))
-        }
     }
 }
 
@@ -184,9 +181,6 @@ fun ProductGridCard(product: ProductDetail, isFavorite: Boolean, modifier: Modif
             }
             IconButton(onClick = onToggleFavorite, modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(32.dp)) {
                 Icon(if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, "Favorito", tint = if (isFavorite) Color.Red else Color(0xFFBDBDBD), modifier = Modifier.size(18.dp))
-            }
-            Box(modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).size(32.dp).clip(CircleShape).background(Color.Black).clickable { onAddToCart() }, contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.Add, "Agregar", tint = Color.White, modifier = Modifier.size(16.dp))
             }
         }
         Spacer(Modifier.height(10.dp))

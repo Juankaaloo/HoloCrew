@@ -38,6 +38,10 @@ import com.example.holocrew.theme.HoloMotion
 import com.example.holocrew.theme.HoloSpacing
 import com.example.holocrew.theme.HoloType
 import kotlinx.coroutines.launch
+import io.github.jan.supabase.compose.auth.composable.NativeSignInResult
+import io.github.jan.supabase.compose.auth.composable.rememberSignInWithGoogle
+import io.github.jan.supabase.compose.auth.composeAuth
+import com.example.holocrew.data.network.SupabaseClient
 
 /**
  * LoginScreen — Pantalla de inicio de sesión con Supabase Auth.
@@ -76,6 +80,28 @@ fun LoginScreen(navController: NavController) {
             return@LaunchedEffect
         }
     }
+
+    val googleSignIn = SupabaseClient.client.composeAuth.rememberSignInWithGoogle(
+        onResult = { result ->
+            when (result) {
+                NativeSignInResult.Success -> {
+                    scope.launch {
+                        TokenManager.loadProfile()
+                        CartRepository.loadCart()
+                        WishlistRepository.loadFavorites()
+                        navController.navigate("home") { popUpTo(0) { inclusive = true } }
+                    }
+                }
+                is NativeSignInResult.Error -> {
+                    Toast.makeText(context, "Error con Google: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+                is NativeSignInResult.ClosedByUser -> { }
+                is NativeSignInResult.NetworkError -> {
+                    Toast.makeText(context, "Error de red", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    )
 
     Box(
         modifier = Modifier
@@ -192,6 +218,24 @@ fun LoginScreen(navController: NavController) {
                 Divider(Modifier.weight(1f), thickness = HoloSpacing.BorderHairline, color = HoloColors.BorderSubtle)
             }
             Spacer(Modifier.height(HoloSpacing.lg))
+
+            // ── Botón GOOGLE ──────────────────────────────────────────────
+            OutlinedButton(
+                onClick = { googleSignIn.startFlow() },
+                modifier = Modifier.fillMaxWidth().height(HoloSpacing.ButtonHeight),
+                shape = RoundedCornerShape(HoloSpacing.RadiusMd),
+                border = ButtonDefaults.outlinedButtonBorder.copy(width = HoloSpacing.BorderDefault)
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_google),  // ver nota abajo
+                    contentDescription = "Google",
+                    modifier = Modifier.size(20.dp),
+                    tint = androidx.compose.ui.graphics.Color.Unspecified
+                )
+                Spacer(Modifier.width(HoloSpacing.sm))
+                Text("CONTINUAR CON GOOGLE", style = HoloType.LabelLarge, color = HoloColors.TextPrimary)
+            }
+            Spacer(Modifier.height(HoloSpacing.sm))
 
             // ── Botón CREAR CUENTA ────────────────────────────────────────────
             OutlinedButton(

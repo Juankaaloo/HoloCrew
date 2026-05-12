@@ -81,6 +81,12 @@ dependencies {
     // ViewModel Compose — viewModel() en composables
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
+    // Google Sign-In con Supabase
+    implementation("io.github.jan-tennert.supabase:compose-auth:3.1.4") // misma version que tu supabase-kt
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+
     // Testing
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
