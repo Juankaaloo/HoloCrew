@@ -54,10 +54,14 @@ fun AvailableScreen(navController: NavController? = null) {
     }
 
     val categories = remember(allProducts) {
-        listOf("Todos") + allProducts.map { it.category }.distinct()
+        listOf("Todos", "Exclusivo") + allProducts.map { it.category }.distinct().filter { it.isNotEmpty() }
     }
     val filteredProducts = remember(selectedFilter, allProducts) {
-        if (selectedFilter == "Todos") allProducts else allProducts.filter { it.category == selectedFilter }
+        when (selectedFilter) {
+            "Todos" -> allProducts.filter { it.status != "Exclusivo" }
+            "Exclusivo" -> allProducts.filter { it.status == "Exclusivo" }
+            else -> allProducts.filter { it.category == selectedFilter && it.status != "Exclusivo" }
+        }
     }
     val featuredProduct = filteredProducts.firstOrNull()
     val gridProducts = if (filteredProducts.size > 1) filteredProducts.drop(1) else emptyList()
