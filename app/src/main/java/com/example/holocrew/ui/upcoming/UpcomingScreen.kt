@@ -178,7 +178,6 @@ fun HeroDropCard(product: SbUpcomingDto) {
             }
             Spacer(Modifier.height(HoloSpacing.md))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) { Icon(Icons.Outlined.Share, "Compartir", tint = HoloColors.TextOnDark, modifier = Modifier.size(HoloSpacing.IconSizeDefault)) }
                 Button(onClick = {}, shape = RoundedCornerShape(HoloSpacing.RadiusPill), colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Paper), contentPadding = PaddingValues(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)) {
                     Icon(Icons.Filled.Notifications, null, tint = HoloColors.Ink, modifier = Modifier.size(HoloSpacing.IconSizeSmall))
                     Spacer(Modifier.width(HoloSpacing.xxs))
@@ -222,7 +221,6 @@ fun LightDropCard(product: SbUpcomingDto) {
                 Spacer(Modifier.height(HoloSpacing.md))
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {}, modifier = Modifier.size(40.dp)) { Icon(Icons.Outlined.Share, "Compartir", tint = HoloColors.Ink, modifier = Modifier.size(HoloSpacing.IconSizeDefault)) }
                 Button(onClick = {}, shape = RoundedCornerShape(HoloSpacing.RadiusPill), colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Ink), contentPadding = PaddingValues(horizontal = HoloSpacing.xl, vertical = HoloSpacing.xs)) {
                     Text("NOTIFICAME", style = HoloType.LabelMedium, color = HoloColors.Paper)
                 }
@@ -260,7 +258,6 @@ fun DarkDropCard(product: SbUpcomingDto) {
             }
             Spacer(Modifier.height(HoloSpacing.sm))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {}, modifier = Modifier.size(36.dp)) { Icon(Icons.Outlined.Share, "Compartir", tint = HoloColors.TextOnDark, modifier = Modifier.size(HoloSpacing.IconSizeDefault)) }
                 Button(onClick = {}, shape = RoundedCornerShape(HoloSpacing.RadiusPill), colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Paper), contentPadding = PaddingValues(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)) {
                     Icon(Icons.Filled.Notifications, null, tint = HoloColors.Ink, modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(HoloSpacing.xxs))
