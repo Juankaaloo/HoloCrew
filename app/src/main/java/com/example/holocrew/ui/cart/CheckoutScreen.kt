@@ -192,7 +192,7 @@ fun CheckoutScreen(navController: NavController) {
                                         .insert(buildJsonObject {
                                             put("user_id", userId)
                                             put("order_number", orderNum)
-                                            put("status", "pending")
+                                            put("status", "processing")
                                             put("payment_status", "pending")
                                             put("subtotal", subtotal)
                                             put("shipping_cost", shippingCost)

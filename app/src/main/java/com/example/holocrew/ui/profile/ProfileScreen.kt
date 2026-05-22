@@ -248,6 +248,7 @@ fun ProfileScreen(navController: NavController? = null) {
                         .fillMaxWidth()
                         .padding(horizontal = HoloSpacing.md)
                         .clip(RoundedCornerShape(HoloSpacing.RadiusLg))
+                        .clickable { navController?.navigate("members") { launchSingleTop = true } }
                         .background(
                             Brush.horizontalGradient(
                                 listOf(HoloColors.Neutral800, HoloColors.Neutral700)
@@ -313,7 +314,8 @@ fun ProfileScreen(navController: NavController? = null) {
                 SectionTitle("AJUSTES")
                 Spacer(Modifier.height(HoloSpacing.xs))
 
-                MenuItem(icon = Icons.Outlined.Notifications, title = "Notificaciones", subtitle = "Drops, ofertas, pedidos")
+                MenuItem(icon = Icons.Outlined.Notifications, title = "Notificaciones", subtitle = "Drops, ofertas, pedidos",
+                    onClick = { navController?.navigate("notifications") { launchSingleTop = true } })
                 MenuItem(icon = Icons.Outlined.Lock, title = "Privacidad y seguridad", subtitle = "Contraseña, eliminar cuenta",
                     onClick = { navController?.navigate("security") { launchSingleTop = true } })
                 MenuItem(icon = Icons.Outlined.Info, title = "Sobre HoloCrew", subtitle = "Version 1.0.0",

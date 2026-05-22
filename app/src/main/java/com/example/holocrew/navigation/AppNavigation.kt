@@ -41,7 +41,8 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import com.example.holocrew.ui.profile.SecurityScreen
 import com.example.holocrew.ui.profile.HelpScreen
 import com.example.holocrew.ui.profile.AboutScreen
-
+import com.example.holocrew.ui.profile.NotificationsScreen
+import com.example.holocrew.ui.profile.MembersScreen
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
@@ -95,6 +96,8 @@ fun AppNavigation() {
         composable("security") { SecurityScreen(navController = navController) }
         composable("help") { HelpScreen(navController = navController) }
         composable("about") { AboutScreen(navController = navController) }
+        composable("notifications") { NotificationsScreen(navController = navController) }
+        composable("members") { MembersScreen(navController = navController) }
 
         composable(
             route = "product_detail/{productId}",
