@@ -49,9 +49,9 @@ fun AboutScreen(navController: NavController) {
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(
-                        painter = painterResource(id = R.drawable.logito),
+                        painter = painterResource(id = R.drawable.logografiti1),
                         contentDescription = "Logo HoloCrew",
-                        modifier = Modifier.height(60.dp).width(160.dp),
+                        modifier = Modifier.height(100.dp).width(200.dp),
                         contentScale = ContentScale.Fit,
                         colorFilter = androidx.compose.ui.graphics.ColorFilter.tint(Color.White)
                     )

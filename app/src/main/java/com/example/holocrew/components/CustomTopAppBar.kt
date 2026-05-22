@@ -65,11 +65,11 @@ fun CustomTopAppBar(
             // Logo de la marca
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = painterResource(id = R.drawable.logito),
+                    painter = painterResource(id = R.drawable.logografiti1),
                     contentDescription = "Logo HoloCrew",
                     modifier = Modifier
-                        .height(55.dp)
-                        .width(150.dp),
+                        .height(80.dp)
+                        .width(180.dp),
                     contentScale = ContentScale.Fit
                 )
             }

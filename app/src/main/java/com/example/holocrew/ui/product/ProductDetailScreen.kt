@@ -149,9 +149,6 @@ fun ProductDetailScreen(navController: NavController, productId: Int) {
                             tint = if (isFavorite) HoloColors.Pulse else HoloColors.Ink
                         )
                     }
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Filled.Share, "Compartir", tint = HoloColors.Ink)
-                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = HoloColors.Paper)
             )

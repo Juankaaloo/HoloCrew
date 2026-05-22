@@ -377,12 +377,6 @@ fun PagerCard(product: ProductDetail, onClick: () -> Unit = {}) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = product.price, style = HoloType.HeadlineSmall, color = HoloColors.Pulse)
                 Spacer(Modifier.weight(1f))
-                Icon(
-                    imageVector = Icons.Outlined.Share,
-                    contentDescription = "Compartir",
-                    tint = HoloColors.TextOnDarkMuted,
-                    modifier = Modifier.size(HoloSpacing.IconSizeDefault)
-                )
             }
         }
     }
