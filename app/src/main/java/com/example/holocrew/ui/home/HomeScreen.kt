@@ -35,6 +35,7 @@ import com.example.holocrew.theme.HoloSpacing
 import com.example.holocrew.theme.HoloType
 import com.example.holocrew.ui.product.ProductDetail
 import kotlinx.coroutines.launch
+import com.example.holocrew.components.SoldOutOverlay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -353,6 +354,7 @@ fun PagerCard(product: ProductDetail, onClick: () -> Unit = {}) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
+        if (product.stock <= 0) { SoldOutOverlay() }
 
         Box(
             modifier = Modifier
@@ -415,6 +417,7 @@ fun MainProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
+            if (product.stock <= 0) { SoldOutOverlay() }
         }
         Spacer(Modifier.height(HoloSpacing.sm))
         Row(
@@ -507,6 +510,7 @@ fun DarkProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                     .clip(RoundedCornerShape(HoloSpacing.RadiusMd)),
                 contentScale = ContentScale.Crop
             )
+            if (product.stock <= 0) { SoldOutOverlay() }
             IconButton(
                 onClick = { scope.launch { WishlistRepository.toggleFavorite(product.id, product.priceRaw) } },
                 modifier = Modifier
@@ -612,6 +616,7 @@ fun SmallProductCard(product: ProductDetail, onClick: () -> Unit = {}) {
                     .clip(RoundedCornerShape(HoloSpacing.RadiusMd)),
                 contentScale = ContentScale.Crop
             )
+            if (product.stock <= 0) { SoldOutOverlay() }
             IconButton(
                 onClick = { scope.launch { WishlistRepository.toggleFavorite(product.id, product.priceRaw) } },
                 modifier = Modifier
@@ -736,6 +741,7 @@ fun TrendingCard(product: ProductDetail, onClick: () -> Unit = {}) {
                         .clip(RoundedCornerShape(topStart = HoloSpacing.RadiusLg, topEnd = HoloSpacing.RadiusLg)),
                     contentScale = ContentScale.Crop
                 )
+                if (product.stock <= 0) { SoldOutOverlay() }
                 Box(
                     modifier = Modifier
                         .padding(HoloSpacing.xs)

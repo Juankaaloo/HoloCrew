@@ -26,6 +26,7 @@ import com.example.holocrew.theme.HoloSpacing
 import com.example.holocrew.theme.HoloType
 import com.example.holocrew.ui.product.ProductDetail
 import kotlinx.coroutines.launch
+import com.example.holocrew.components.SoldOutOverlay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,6 +147,7 @@ fun FavoriteProductCard(
                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(HoloSpacing.RadiusMd)),
                 contentScale = ContentScale.Crop
             )
+            if (product.stock <= 0) { SoldOutOverlay() }
             IconButton(
                 onClick = onRemoveFavorite,
                 modifier = Modifier.align(Alignment.TopEnd).padding(HoloSpacing.xxs).size(32.dp)

@@ -151,6 +151,7 @@ fun CategoryFilterChip(text: String, isSelected: Boolean = false, onClick: () ->
 fun FeaturedProductCard(product: ProductDetail, isFavorite: Boolean, onClick: () -> Unit = {}, onAddToCart: () -> Unit = {}, onToggleFavorite: () -> Unit = {}) {
     Box(modifier = Modifier.fillMaxWidth().height(380.dp).padding(horizontal = 16.dp).clip(RoundedCornerShape(16.dp)).clickable { onClick() }) {
         AsyncImage(model = product.imageUrl, contentDescription = product.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        if (product.stock <= 0) { SoldOutOverlay() }
         Box(modifier = Modifier.fillMaxWidth().height(200.dp).align(Alignment.BottomCenter).background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
         Box(modifier = Modifier.padding(14.dp).align(Alignment.TopStart).clip(RoundedCornerShape(8.dp)).background(statusBadgeColor(product.status)).padding(horizontal = 10.dp, vertical = 5.dp)) {
             Text(product.status.uppercase(), color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -174,6 +175,7 @@ fun ProductGridCard(product: ProductDetail, isFavorite: Boolean, modifier: Modif
     Column(modifier = modifier.clickable { onClick() }) {
         Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFFF5F5F5))) {
             AsyncImage(model = product.imageUrl, contentDescription = product.title, modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)), contentScale = ContentScale.Crop)
+            if (product.stock <= 0) { SoldOutOverlay() }
             if (product.status.isNotEmpty()) {
                 Box(modifier = Modifier.padding(8.dp).align(Alignment.TopStart).clip(RoundedCornerShape(6.dp)).background(statusBadgeColor(product.status)).padding(horizontal = 8.dp, vertical = 4.dp)) {
                     Text(product.status.uppercase(), color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
@@ -190,6 +192,24 @@ fun ProductGridCard(product: ProductDetail, isFavorite: Boolean, modifier: Modif
             Text(product.price, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
             product.originalPrice?.let { Spacer(Modifier.width(6.dp)); Text(it, fontSize = 12.sp, color = Color(0xFF9E9E9E), textDecoration = TextDecoration.LineThrough) }
         }
+    }
+}
+
+@Composable
+fun SoldOutOverlay() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.6f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            "SOLD OUT",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Black,
+            color = Color.White,
+            letterSpacing = 3.sp
+        )
     }
 }
 

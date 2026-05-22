@@ -32,6 +32,8 @@ import coil.compose.AsyncImage
 import com.example.holocrew.data.network.ProductRepository
 import com.example.holocrew.ui.product.ProductDetail
 import kotlinx.coroutines.launch
+import com.example.holocrew.components.SoldOutOverlay
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,25 +45,33 @@ fun SearchScreen(navController: NavController) {
     var searchResults by remember { mutableStateOf<List<ProductDetail>>(emptyList()) }
     var popularProducts by remember { mutableStateOf<List<ProductDetail>>(emptyList()) }
     var isSearching by remember { mutableStateOf(false) }
+    var categories by remember { mutableStateOf<List<String>>(emptyList()) }
+    var allProducts by remember { mutableStateOf<List<ProductDetail>>(emptyList()) }  // NUEVO
 
-    val quickSuggestions = remember {
-        listOf("Ropa", "Denim", "Accesorios", "Hoodie", "Polo", "Premium")
-    }
-
-    // Cargar productos populares al entrar
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
+        allProducts = ProductRepository.getAll()
         popularProducts = ProductRepository.getTrending(4)
+        categories = allProducts.map { it.category }.distinct().filter { it.isNotEmpty() }
     }
 
-    // Buscar cuando cambia el query (con debounce simple)
     LaunchedEffect(searchQuery) {
         if (searchQuery.isBlank()) {
             searchResults = emptyList()
             return@LaunchedEffect
         }
         isSearching = true
-        searchResults = ProductRepository.search(searchQuery)
+        // Si el query coincide exactamente con una categoría, filtrar por categoría
+        val isCategory = categories.any { it.equals(searchQuery, ignoreCase = true) }
+        searchResults = if (isCategory) {
+            allProducts.filter { it.category.equals(searchQuery, ignoreCase = true) }
+        } else {
+            allProducts.filter {
+                it.title.contains(searchQuery, ignoreCase = true) ||
+                        it.subtitle.contains(searchQuery, ignoreCase = true) ||
+                        it.category.contains(searchQuery, ignoreCase = true)
+            }
+        }
         isSearching = false
     }
 
@@ -98,8 +108,8 @@ fun SearchScreen(navController: NavController) {
                     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 16.dp)) {
                         Text("SUGERENCIAS", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color(0xFF9E9E9E), letterSpacing = 1.sp, modifier = Modifier.padding(bottom = 12.dp))
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(quickSuggestions) { suggestion ->
-                                SuggestionChip(text = suggestion, onClick = { searchQuery = suggestion })
+                            items(categories) { category ->
+                                SuggestionChip(text = category, onClick = { searchQuery = category })
                             }
                         }
                         Spacer(Modifier.height(32.dp))
@@ -217,7 +227,11 @@ fun PopularSearchItem(product: ProductDetail, onClick: () -> Unit, modifier: Mod
             Text(product.title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(product.category, fontSize = 12.sp, color = Color(0xFF9E9E9E), modifier = Modifier.padding(top = 2.dp))
         }
-        Text(product.price, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        if (product.stock <= 0) {
+            Text("SOLD OUT", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Red)
+        } else {
+            Text(product.price, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        }
     }
 }
 
@@ -231,6 +245,7 @@ fun SearchResultCard(product: ProductDetail, modifier: Modifier = Modifier, onCl
                 modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)),
                 contentScale = ContentScale.Crop
             )
+            if (product.stock <= 0) { SoldOutOverlay() }
         }
         Spacer(Modifier.height(8.dp))
         Text(product.title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Black, maxLines = 1, overflow = TextOverflow.Ellipsis)

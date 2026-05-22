@@ -38,6 +38,9 @@ import com.example.holocrew.ui.search.SearchScreen
 import com.example.holocrew.ui.upcoming.UpcomingScreen
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
+import com.example.holocrew.ui.profile.SecurityScreen
+import com.example.holocrew.ui.profile.HelpScreen
+import com.example.holocrew.ui.profile.AboutScreen
 
 @Composable
 fun AppNavigation() {
@@ -89,6 +92,9 @@ fun AppNavigation() {
         composable(Screen.Addresses.route) { AddressesScreen(navController = navController) }
         composable(Screen.PaymentMethods.route) { PaymentMethodsScreen(navController = navController) }
         composable(Screen.Checkout.route) { CheckoutScreen(navController = navController) }
+        composable("security") { SecurityScreen(navController = navController) }
+        composable("help") { HelpScreen(navController = navController) }
+        composable("about") { AboutScreen(navController = navController) }
 
         composable(
             route = "product_detail/{productId}",

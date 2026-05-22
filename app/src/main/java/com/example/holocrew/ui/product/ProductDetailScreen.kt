@@ -35,6 +35,7 @@ import com.example.holocrew.theme.HoloSpacing
 import com.example.holocrew.theme.HoloType
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
+import com.example.holocrew.components.SoldOutOverlay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,6 +178,7 @@ fun ProductDetailScreen(navController: NavController, productId: Int) {
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
+                    if (p.stock <= 0) { SoldOutOverlay() }
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -286,32 +288,35 @@ fun ProductDetailScreen(navController: NavController, productId: Int) {
                             .fillMaxWidth()
                             .height(HoloSpacing.ButtonHeight),
                         shape = RoundedCornerShape(HoloSpacing.RadiusPill),
-                        colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Ink)
+                        colors = ButtonDefaults.buttonColors(containerColor = if (p.stock > 0) HoloColors.Ink else HoloColors.Neutral300),
+                        enabled = p.stock > 0
                     ) {
-                        Text(text = "COMPRAR AHORA", style = HoloType.LabelLarge, color = HoloColors.Paper)
+                        Text(text = if (p.stock > 0) "COMPRAR AHORA" else "SIN STOCK", style = HoloType.LabelLarge, color = HoloColors.Paper)
                     }
 
                     Spacer(Modifier.height(HoloSpacing.xs))
 
-                    OutlinedButton(
-                        onClick = {
-                            if (p.sizes.isNotEmpty()) {
-                                sizeSheetAction = "cart"
-                                showSizeSheet = true
-                            } else {
-                                scope.launch {
-                                    CartRepository.addItem(productId = p.id, price = p.priceRaw)
-                                    snackbarHostState.showSnackbar("${p.title} agregado al carrito")
+                    if (p.stock > 0) {
+                        OutlinedButton(
+                            onClick = {
+                                if (p.sizes.isNotEmpty()) {
+                                    sizeSheetAction = "cart"
+                                    showSizeSheet = true
+                                } else {
+                                    scope.launch {
+                                        CartRepository.addItem(productId = p.id, price = p.priceRaw)
+                                        snackbarHostState.showSnackbar("${p.title} agregado al carrito")
+                                    }
                                 }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(HoloSpacing.ButtonHeight),
-                        shape = RoundedCornerShape(HoloSpacing.RadiusPill),
-                        border = ButtonDefaults.outlinedButtonBorder.copy(width = HoloSpacing.BorderDefault)
-                    ) {
-                        Text(text = "AGREGAR A LA CESTA", style = HoloType.LabelLarge, color = HoloColors.TextPrimary)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(HoloSpacing.ButtonHeight),
+                            shape = RoundedCornerShape(HoloSpacing.RadiusPill),
+                            border = ButtonDefaults.outlinedButtonBorder.copy(width = HoloSpacing.BorderDefault)
+                        ) {
+                            Text(text = "AGREGAR A LA CESTA", style = HoloType.LabelLarge, color = HoloColors.TextPrimary)
+                        }
                     }
 
                     Spacer(Modifier.height(HoloSpacing.xl))

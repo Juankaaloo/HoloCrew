@@ -164,19 +164,35 @@ object ProductRepository {
     }
 
     suspend fun search(query: String): List<ProductDetail> {
-        if (query.isBlank()) return emptyList()
-
-        return client.from("products")
-            .select(Columns.raw(SELECT_ALL)) {
-                filter {
-                    eq("is_active", true)
-                    or {
-                        ilike("name", "%$query%")
-                        ilike("description", "%$query%")
+        return try {
+            // Primero buscar por nombre/descripción
+            val byName = client.from("products")
+                .select(Columns.raw(SELECT_ALL)) {
+                    filter {
+                        or {
+                            ilike("name", "%$query%")
+                            ilike("short_description", "%$query%")
+                            ilike("description", "%$query%")
+                        }
                     }
                 }
-            }
-            .decodeList<SbProductDto>()
-            .map { it.toProductDetail() }
+                .decodeList<SbProductDto>()
+
+            // Si no hay resultados por nombre, buscar por categoría
+            val results = if (byName.isEmpty()) {
+                client.from("products")
+                    .select(Columns.raw(SELECT_ALL)) {
+                        filter {
+                            ilike("categories.name", "%$query%")
+                        }
+                    }
+                    .decodeList<SbProductDto>()
+            } else byName
+
+            results.map { it.toProductDetail() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
     }
 }

@@ -297,24 +297,12 @@ fun ProfileScreen(navController: NavController? = null) {
                 SectionTitle("MI CUENTA")
                 Spacer(Modifier.height(HoloSpacing.xs))
 
-                MenuItem(
-                    icon = Icons.Outlined.CreditCard,
-                    title = "Métodos de pago",
-                    subtitle = "Gestiona tus métodos de pago",
-                    onClick = { navController?.navigate("payment_methods") { launchSingleTop = true } }
-                )
-                MenuItem(
-                    icon = Icons.Outlined.LocationOn,
-                    title = "Direcciones de envío",
-                    subtitle = "Gestiona tus direcciones",
-                    onClick = { navController?.navigate("addresses") { launchSingleTop = true } }
-                )
-                MenuItem(
-                    icon = Icons.Outlined.Person,
-                    title = "Datos personales",
-                    subtitle = "Nombre, email, teléfono",
-                    onClick = { navController?.navigate("edit_profile") { launchSingleTop = true } }
-                )
+                MenuItem(icon = Icons.Outlined.CreditCard, title = "Métodos de pago", subtitle = "Tarjetas guardadas",
+                    onClick = { navController?.navigate("payment_methods") { launchSingleTop = true } })
+                MenuItem(icon = Icons.Outlined.LocationOn, title = "Direcciones de envío", subtitle = "Gestiona tus direcciones",
+                    onClick = { navController?.navigate("addresses") { launchSingleTop = true } })
+                MenuItem(icon = Icons.Outlined.Person, title = "Datos personales", subtitle = "Nombre, email, teléfono",
+                    onClick = { navController?.navigate("edit_profile") { launchSingleTop = true } })
             }
 
             // ══════════════════════════════════════════════════════════════════
@@ -326,9 +314,12 @@ fun ProfileScreen(navController: NavController? = null) {
                 Spacer(Modifier.height(HoloSpacing.xs))
 
                 MenuItem(icon = Icons.Outlined.Notifications, title = "Notificaciones", subtitle = "Drops, ofertas, pedidos")
-                MenuItem(icon = Icons.Outlined.Lock, title = "Privacidad y seguridad", subtitle = "Contraseña, sesiones activas")
-                MenuItem(icon = Icons.Outlined.Info, title = "Sobre HoloCrew", subtitle = "Versión 1.0.0")
-                MenuItem(icon = Icons.Outlined.Help, title = "Centro de ayuda", subtitle = "FAQ, contacto, soporte")
+                MenuItem(icon = Icons.Outlined.Lock, title = "Privacidad y seguridad", subtitle = "Contraseña, eliminar cuenta",
+                    onClick = { navController?.navigate("security") { launchSingleTop = true } })
+                MenuItem(icon = Icons.Outlined.Info, title = "Sobre HoloCrew", subtitle = "Version 1.0.0",
+                    onClick = { navController?.navigate("about") { launchSingleTop = true } })
+                MenuItem(icon = Icons.Outlined.Help, title = "Centro de ayuda", subtitle = "FAQ, contacto, soporte",
+                    onClick = { navController?.navigate("help") { launchSingleTop = true } })
             }
 
             // ══════════════════════════════════════════════════════════════════

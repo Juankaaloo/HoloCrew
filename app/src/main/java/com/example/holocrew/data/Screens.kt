@@ -16,6 +16,9 @@ sealed class Screen(val route: String) {
     object MyOrders : Screen("my_orders")
     object Addresses : Screen("addresses")
     object PaymentMethods : Screen("payment_methods")
+    object Security : Screen("security")
+    object Help : Screen("help")
+    object About : Screen("about")
 
     object Checkout : Screen("checkout")
 }
