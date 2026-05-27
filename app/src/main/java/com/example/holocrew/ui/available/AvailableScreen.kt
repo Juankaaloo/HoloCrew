@@ -58,9 +58,9 @@ fun AvailableScreen(navController: NavController? = null) {
     }
     val filteredProducts = remember(selectedFilter, allProducts) {
         when (selectedFilter) {
-            "Todos" -> allProducts.filter { it.status != "Exclusivo" }
-            "Exclusivo" -> allProducts.filter { it.status == "Exclusivo" }
-            else -> allProducts.filter { it.category == selectedFilter && it.status != "Exclusivo" }
+            "Todos" -> allProducts.filter { !it.isAppExclusive }
+            "Exclusivo" -> allProducts.filter { it.isAppExclusive }
+            else -> allProducts.filter { it.category == selectedFilter && !it.isAppExclusive }
         }
     }
     val featuredProduct = filteredProducts.firstOrNull()

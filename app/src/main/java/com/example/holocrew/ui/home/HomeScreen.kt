@@ -168,7 +168,7 @@ fun HomeScreen(
             if (uiState.onSaleProducts.isNotEmpty()) {
                 item {
                     GraySection(
-                        title = "Ultima oportunidad,\naprovechala!",
+                        title = "Ultima oportunidad, aprovechala!",
                         products = uiState.onSaleProducts,
                         onProductClick = { navController.navigate("product_detail/${it.id}") },
                         onSeeAllClick = { navController.navigate("available") { launchSingleTop = true } }

@@ -36,7 +36,8 @@ data class ProductDetail(
     val stock: Int = 0,
     val collection: String = "",
     val gender: String = "",
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val isAppExclusive: Boolean = false
 )
 
 // Mapper: SbProductDto (Supabase) -> ProductDetail (UI)
@@ -78,6 +79,7 @@ fun SbProductDto.toProductDetail(isFavorite: Boolean = false): ProductDetail {
         stock = this.stock,
         collection = this.collection ?: "",
         gender = this.gender ?: "",
-        isFavorite = isFavorite
+        isFavorite = isFavorite,
+        isAppExclusive = this.isAppExclusive
     )
 }

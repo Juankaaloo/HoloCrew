@@ -21,6 +21,7 @@ data class SbProductDto(
     @SerialName("is_best_seller") val isBestSeller: Boolean = false,
     @SerialName("is_black_week") val isBlackWeek: Boolean = false,
     @SerialName("is_flash_sale") val isFlashSale: Boolean = false,
+    @SerialName("is_app_exclusive") val isAppExclusive: Boolean = false,
     val collection: String? = null,
     @SerialName("avg_rating") val avgRating: Double = 0.0,
     @SerialName("review_count") val reviewCount: Int = 0,

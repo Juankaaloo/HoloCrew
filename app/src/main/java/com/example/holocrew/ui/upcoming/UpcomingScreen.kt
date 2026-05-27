@@ -9,9 +9,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,6 +36,7 @@ fun UpcomingScreen(navController: NavController) {
     var selectedFilter by remember { mutableStateOf("Todos") }
     var allProducts by remember { mutableStateOf<List<SbUpcomingDto>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var notifiedIds by remember { mutableStateOf(setOf<Int>()) }
 
     val filters = listOf("Todos", "upcoming", "reservation", "preorder")
     val filterLabels = mapOf("Todos" to "Todos", "upcoming" to "Proximamente", "reservation" to "Reserva", "preorder" to "Pre-orden")
@@ -101,15 +102,22 @@ fun UpcomingScreen(navController: NavController) {
 
             if (!isLoading && heroProduct != null) {
                 item {
-                    HeroDropCard(product = heroProduct)
+                    HeroDropCard(
+                        product = heroProduct,
+                        isNotified = notifiedIds.contains(heroProduct.id),
+                        onNotify = { notifiedIds = if (notifiedIds.contains(heroProduct.id)) notifiedIds - heroProduct.id else notifiedIds + heroProduct.id }
+                    )
                     Spacer(Modifier.height(HoloSpacing.md))
                 }
             }
 
             if (!isLoading) {
                 itemsIndexed(restProducts) { index, product ->
-                    if (index % 2 == 0) LightDropCard(product = product)
-                    else DarkDropCard(product = product)
+                    DarkDropCard(
+                        product = product,
+                        isNotified = notifiedIds.contains(product.id),
+                        onNotify = { notifiedIds = if (notifiedIds.contains(product.id)) notifiedIds - product.id else notifiedIds + product.id }
+                    )
                     Spacer(Modifier.height(HoloSpacing.md))
                 }
             }
@@ -150,7 +158,7 @@ fun StatusFilterChip(text: String, isSelected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-fun HeroDropCard(product: SbUpcomingDto) {
+fun HeroDropCard(product: SbUpcomingDto, isNotified: Boolean = false, onNotify: () -> Unit = {}) {
     Box(
         modifier = Modifier.fillMaxWidth().height(420.dp).padding(horizontal = HoloSpacing.md).clip(RoundedCornerShape(HoloSpacing.RadiusLg))
     ) {
@@ -177,19 +185,31 @@ fun HeroDropCard(product: SbUpcomingDto) {
                 Text(formatPrice(product.price), style = HoloType.HeadlineMedium, color = HoloColors.TextOnDark)
             }
             Spacer(Modifier.height(HoloSpacing.md))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Button(onClick = {}, shape = RoundedCornerShape(HoloSpacing.RadiusPill), colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Paper), contentPadding = PaddingValues(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)) {
-                    Icon(Icons.Filled.Notifications, null, tint = HoloColors.Ink, modifier = Modifier.size(HoloSpacing.IconSizeSmall))
-                    Spacer(Modifier.width(HoloSpacing.xxs))
-                    Text("Notificame", style = HoloType.TitleMedium, color = HoloColors.Ink)
-                }
+            Button(
+                onClick = onNotify,
+                shape = RoundedCornerShape(HoloSpacing.RadiusPill),
+                colors = ButtonDefaults.buttonColors(containerColor = if (isNotified) HoloColors.Success else HoloColors.Paper),
+                contentPadding = PaddingValues(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)
+            ) {
+                Icon(
+                    if (isNotified) Icons.Filled.Check else Icons.Filled.Notifications,
+                    null,
+                    tint = if (isNotified) HoloColors.Paper else HoloColors.Ink,
+                    modifier = Modifier.size(HoloSpacing.IconSizeSmall)
+                )
+                Spacer(Modifier.width(HoloSpacing.xxs))
+                Text(
+                    if (isNotified) "Activado" else "Notificame",
+                    style = HoloType.TitleMedium,
+                    color = if (isNotified) HoloColors.Paper else HoloColors.Ink
+                )
             }
         }
     }
 }
 
 @Composable
-fun LightDropCard(product: SbUpcomingDto) {
+fun LightDropCard(product: SbUpcomingDto, isNotified: Boolean = false, onNotify: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = HoloSpacing.md),
         shape = RoundedCornerShape(HoloSpacing.RadiusLg),
@@ -220,17 +240,28 @@ fun LightDropCard(product: SbUpcomingDto) {
                 }
                 Spacer(Modifier.height(HoloSpacing.md))
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Button(onClick = {}, shape = RoundedCornerShape(HoloSpacing.RadiusPill), colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Ink), contentPadding = PaddingValues(horizontal = HoloSpacing.xl, vertical = HoloSpacing.xs)) {
-                    Text("NOTIFICAME", style = HoloType.LabelMedium, color = HoloColors.Paper)
+            Button(
+                onClick = onNotify,
+                shape = RoundedCornerShape(HoloSpacing.RadiusPill),
+                colors = ButtonDefaults.buttonColors(containerColor = if (isNotified) HoloColors.Success else HoloColors.Ink),
+                contentPadding = PaddingValues(horizontal = HoloSpacing.xl, vertical = HoloSpacing.xs)
+            ) {
+                if (isNotified) {
+                    Icon(Icons.Filled.Check, null, tint = HoloColors.Paper, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(HoloSpacing.xxs))
                 }
+                Text(
+                    if (isNotified) "ACTIVADO" else "NOTIFICAME",
+                    style = HoloType.LabelMedium,
+                    color = HoloColors.Paper
+                )
             }
         }
     }
 }
 
 @Composable
-fun DarkDropCard(product: SbUpcomingDto) {
+fun DarkDropCard(product: SbUpcomingDto, isNotified: Boolean = false, onNotify: () -> Unit = {}) {
     Box(
         modifier = Modifier.fillMaxWidth().height(340.dp).padding(horizontal = HoloSpacing.md).clip(RoundedCornerShape(HoloSpacing.RadiusLg))
     ) {
@@ -257,12 +288,24 @@ fun DarkDropCard(product: SbUpcomingDto) {
                 Text(formatPrice(product.price), style = HoloType.HeadlineSmall, color = HoloColors.TextOnDark)
             }
             Spacer(Modifier.height(HoloSpacing.sm))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Button(onClick = {}, shape = RoundedCornerShape(HoloSpacing.RadiusPill), colors = ButtonDefaults.buttonColors(containerColor = HoloColors.Paper), contentPadding = PaddingValues(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)) {
-                    Icon(Icons.Filled.Notifications, null, tint = HoloColors.Ink, modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(HoloSpacing.xxs))
-                    Text("Notificame", style = HoloType.TitleSmall, color = HoloColors.Ink)
-                }
+            Button(
+                onClick = onNotify,
+                shape = RoundedCornerShape(HoloSpacing.RadiusPill),
+                colors = ButtonDefaults.buttonColors(containerColor = if (isNotified) HoloColors.Success else HoloColors.Paper),
+                contentPadding = PaddingValues(horizontal = HoloSpacing.lg, vertical = HoloSpacing.xs)
+            ) {
+                Icon(
+                    if (isNotified) Icons.Filled.Check else Icons.Filled.Notifications,
+                    null,
+                    tint = if (isNotified) HoloColors.Paper else HoloColors.Ink,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(Modifier.width(HoloSpacing.xxs))
+                Text(
+                    if (isNotified) "Activado" else "Notificame",
+                    style = HoloType.TitleSmall,
+                    color = if (isNotified) HoloColors.Paper else HoloColors.Ink
+                )
             }
         }
     }
