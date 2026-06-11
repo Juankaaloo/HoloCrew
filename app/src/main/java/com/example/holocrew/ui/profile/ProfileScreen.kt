@@ -171,19 +171,6 @@ fun ProfileScreen(navController: NavController? = null) {
                                 )
                             }
                         }
-
-                        Spacer(Modifier.weight(1f))
-
-                        // Botón editar perfil
-                        IconButton(onClick = {
-                            navController?.navigate("edit_profile") { launchSingleTop = true }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Outlined.Edit,
-                                contentDescription = "Editar perfil",
-                                tint = HoloColors.TextOnDarkMuted
-                            )
-                        }
                     }
                 }
             }

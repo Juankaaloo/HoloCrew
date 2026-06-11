@@ -34,9 +34,9 @@ fun CartScreen(navController: NavController) {
 
     LaunchedEffect(Unit) { CartRepository.loadCart() }
 
-    val subtotal = CartRepository.getSubtotal()
-    val shipping = CartRepository.getShippingCost()
-    val total = CartRepository.getTotal()
+    val subtotal = remember(cartItems) { CartRepository.getSubtotal() }
+    val shipping = remember(cartItems) { CartRepository.getShippingCost() }
+    val total = remember(cartItems) { CartRepository.getTotal() }
 
     Scaffold(
         topBar = {

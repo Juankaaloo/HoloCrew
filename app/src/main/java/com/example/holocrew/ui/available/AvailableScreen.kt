@@ -34,12 +34,13 @@ import com.example.holocrew.data.network.ProductRepository
 import com.example.holocrew.data.network.WishlistRepository
 import com.example.holocrew.ui.product.ProductDetail
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AvailableScreen(navController: NavController? = null) {
     val scope = rememberCoroutineScope()
-    var selectedFilter by remember { mutableStateOf("Todos") }
+    var selectedFilter by rememberSaveable { mutableStateOf("Todos") }
     val snackbarHostState = remember { SnackbarHostState() }
     val favoriteIds by WishlistRepository.favoriteIds.collectAsState()
 
