@@ -163,7 +163,7 @@ object CartRepository {
 
     fun getShippingCost(): Double {
         val subtotal = getSubtotal()
-        return if (subtotal >= 150.0) 0.0 else 9.99
+        return if (subtotal >= 50.0) 0.0 else 5.99
     }
 
     fun getTotal(): Double {

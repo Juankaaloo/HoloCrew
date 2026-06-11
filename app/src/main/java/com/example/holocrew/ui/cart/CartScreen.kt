@@ -122,9 +122,9 @@ fun CartScreen(navController: NavController) {
                                 valueColor = if (shipping == 0.0) HoloColors.Success else HoloColors.TextPrimary
                             )
 
-                            if (subtotal < 150) {
+                            if (subtotal < 50) {
                                 Text(
-                                    "Agrega ${"%.2f".format(150 - subtotal)}\u20AC mas para envio gratis",
+                                    "Agrega ${"%.2f".format(50 - subtotal)}\u20AC mas para envio gratis",
                                     style = HoloType.BodySmall, color = HoloColors.TextTertiary,
                                     modifier = Modifier.padding(vertical = HoloSpacing.xxs)
                                 )
