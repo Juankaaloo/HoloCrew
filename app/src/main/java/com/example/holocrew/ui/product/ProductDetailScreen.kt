@@ -469,7 +469,7 @@ fun ShippingInfoCard() {
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(HoloSpacing.md)) {
-            ShippingRow(Icons.Filled.LocalShipping, "Envio gratis", "En pedidos superiores a 150 EUR")
+            ShippingRow(Icons.Filled.LocalShipping, "Envio gratis", "En pedidos superiores a 50 EUR")
             Spacer(Modifier.height(HoloSpacing.sm))
             ShippingRow(Icons.Filled.Loop, "Devolucion gratuita", "30 dias para devoluciones")
             Spacer(Modifier.height(HoloSpacing.sm))
